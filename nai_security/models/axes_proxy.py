@@ -10,7 +10,7 @@ try:
             proxy = True
             verbose_name = "Access Attempt"
             verbose_name_plural = "Access Attempts"
-            app_label = 'security'
+            app_label = 'nai_security'
 
 except ImportError:
     # axes not installed
