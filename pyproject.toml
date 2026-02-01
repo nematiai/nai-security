@@ -10,7 +10,7 @@ readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.11"
 authors = [
-    {name = "Ali Nemati", email = "ali@nemati.ai"}
+    {name = "Ali Nemati", email = "alinemati@nemati.ai"}
 ]
 keywords = [
     "django",
@@ -61,10 +61,10 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/AliNemati22/nai-security"
-Documentation = "https://github.com/AliNemati22/nai-security#readme"
-Repository = "https://github.com/AliNemati22/nai-security"
-Issues = "https://github.com/AliNemati22/nai-security/issues"
+Homepage = "https://github.com/nematiai/nai-security"
+Documentation = "https://github.com/nematiai/nai-security#readme"
+Repository = "https://github.com/nematiai/nai-security"
+Issues = "https://github.com/nematiai/nai-security/issues"
 
 [tool.setuptools.packages.find]
 where = ["."]
