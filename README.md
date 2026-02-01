@@ -19,11 +19,83 @@ Django security package for IP blocking, country blocking, email blocking, rate 
 pip install git+https://github.com/nematiai/nai-security.git
 ```
 
-Or add to 
-equirements.txt:
+Or add to requirements.txt:
 ```
 git+https://github.com/nematiai/nai-security.git@production#egg=nai-security
 ```
+
+### Docker Installation for Private Repositories
+
+For a **private GitHub repo**, you need authentication in Docker. Two options:
+
+---
+
+#### Option 1: GitHub Personal Access Token (Recommended)
+
+**In requirements.txt:**
+```
+git+https://${GITHUB_TOKEN}@github.com/nematiai/nai-security.git@main#egg=nai-security
+```
+
+**In Dockerfile:**
+```dockerfile
+ARG GITHUB_TOKEN
+RUN pip install git+https://${GITHUB_TOKEN}@github.com/nematiai/nai-security.git@main#egg=nai-security
+```
+
+**In docker-compose.yml:**
+```yaml
+services:
+  backend:
+    build:
+      args:
+        GITHUB_TOKEN: ${GITHUB_TOKEN}
+```
+
+**In .env:**
+```
+GITHUB_TOKEN=ghp_xxxxxxxxxxxxxxxxxxxx
+```
+
+---
+
+#### Option 2: SSH Key
+
+**In Dockerfile:**
+```dockerfile
+RUN mkdir -p /root/.ssh && \
+    ssh-keyscan github.com >> /root/.ssh/known_hosts
+
+COPY --from=secrets /run/secrets/ssh_key /root/.ssh/id_rsa
+RUN chmod 600 /root/.ssh/id_rsa
+
+RUN pip install git+ssh://git@github.com/nematiai/nai-security.git@main#egg=nai-security
+```
+
+---
+
+#### Option 3: Copy Package Locally (Simplest for Private)
+
+**In Dockerfile:**
+```dockerfile
+COPY ./nai-security /nai-security
+RUN pip install /nai-security
+```
+
+**In docker-compose.yml:**
+```yaml
+services:
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+```
+
+---
+
+**My recommendation:** For private packages, use **Option 1 (Token)** or **Option 3 (Copy locally)**.
+
+Which do you prefer?
 
 ## Quick Start
 
@@ -83,6 +155,11 @@ python manage.py download_geoip
 Install all optional dependencies:
 ```bash
 pip install nai-security[all]
+```
+
+Install with import/export support:
+```bash
+pip install nai-security[import-export]
 ```
 
 ## Environment Variables
