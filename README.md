@@ -22,7 +22,7 @@ pip install git+https://github.com/nematiai/nai-security.git
 Or add to 
 equirements.txt:
 ```
-git+https://github.com/nematiai/nai-security.git@main#egg=nai-security
+git+https://github.com/nematiai/nai-security.git@production#egg=nai-security
 ```
 
 ## Quick Start
