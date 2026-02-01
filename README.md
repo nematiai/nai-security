@@ -1,7 +1,3 @@
-Yes, the package README needs to be updated. Let me create a proper one for `nai-security`:
-
-```powershell
-Set-Content -Path "D:\NAI_Project\nai-security\README.md" -Value @"
 # NAI Security
 
 Django security package for IP blocking, country blocking, email blocking, rate limiting, and login tracking.
@@ -19,31 +15,28 @@ Django security package for IP blocking, country blocking, email blocking, rate 
 - **Security Logs** - Comprehensive logging of all security events
 
 ## Installation
-
-``````bash
+```bash
 pip install git+https://github.com/nematiai/nai-security.git
-``````
+```
 
-Or add to `requirements.txt`:
-
-``````
+Or add to 
+equirements.txt:
+```
 git+https://github.com/nematiai/nai-security.git@main#egg=nai-security
-``````
+```
 
 ## Quick Start
 
 ### 1. Add to INSTALLED_APPS
-
-``````python
+```python
 INSTALLED_APPS = [
     ...
     "nai_security",
 ]
-``````
+```
 
 ### 2. Add Middleware
-
-``````python
+```python
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     ...
@@ -51,31 +44,28 @@ MIDDLEWARE = [
     ...
     "nai_security.middleware.RateLimitLoggingMiddleware",  # Near the end
 ]
-``````
+```
 
 ### 3. Configure Settings
-
-``````python
+```python
 # GeoIP database path
 GEOIP_PATH = "/path/to/GeoLite2-Country.mmdb"
 
 # Optional: Enable/disable middleware
 SECURITY_MIDDLEWARE_ENABLED = True
 RATELIMIT_MIDDLEWARE_ENABLED = True
-``````
+```
 
 ### 4. Run Migrations
-
-``````bash
+```bash
 python manage.py makemigrations nai_security
 python manage.py migrate
-``````
+```
 
 ### 5. Download GeoIP Database
-
-``````bash
+```bash
 python manage.py download_geoip
-``````
+```
 
 ## Dependencies
 
@@ -91,22 +81,20 @@ python manage.py download_geoip
 - django-unfold >= 0.10 (admin theme)
 
 Install all optional dependencies:
-
-``````bash
+```bash
 pip install nai-security[all]
-``````
+```
 
 ## Environment Variables
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `GEOIP_PATH` | `./geoip/GeoLite2-Country.mmdb` | Path to GeoIP database |
-| `SECURITY_MIDDLEWARE_ENABLED` | `True` | Enable security middleware |
-| `RATELIMIT_MIDDLEWARE_ENABLED` | `True` | Enable rate limit logging |
+| GEOIP_PATH | ./geoip/GeoLite2-Country.mmdb | Path to GeoIP database |
+| SECURITY_MIDDLEWARE_ENABLED | True | Enable security middleware |
+| RATELIMIT_MIDDLEWARE_ENABLED | True | Enable rate limit logging |
 
 ## Management Commands
-
-``````bash
+```bash
 # Download GeoIP database
 python manage.py download_geoip
 
@@ -114,13 +102,12 @@ python manage.py download_geoip
 python manage.py sync_security_lists
 python manage.py sync_security_lists --domains-only
 python manage.py sync_security_lists --bots-only
-``````
+```
 
 ## Celery Tasks
 
 Add to your Celery beat schedule:
-
-``````python
+```python
 CELERY_BEAT_SCHEDULE = {
     'security-auto-blocks': {
         'task': 'security.process_auto_blocks',
@@ -139,23 +126,23 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': crontab(minute=0, hour=6),  # Daily at 6 AM
     },
 }
-``````
+```
 
 ## Models
 
 | Model | Description |
 |-------|-------------|
-| `BlockedIP` | Blocked IP addresses |
-| `BlockedCountry` | Blocked countries |
-| `AllowedCountry` | Allowed countries (whitelist mode) |
-| `BlockedEmail` | Blocked email addresses |
-| `BlockedDomain` | Blocked email domains |
-| `BlockedUserAgent` | Blocked user agents |
-| `WhitelistedIP` | IPs that bypass all checks |
-| `RateLimitRule` | Custom rate limit rules |
-| `LoginHistory` | User login tracking |
-| `SecurityLog` | Security event logs |
-| `SecuritySettings` | Global settings (singleton) |
+| BlockedIP | Blocked IP addresses |
+| BlockedCountry | Blocked countries |
+| AllowedCountry | Allowed countries (whitelist mode) |
+| BlockedEmail | Blocked email addresses |
+| BlockedDomain | Blocked email domains |
+| BlockedUserAgent | Blocked user agents |
+| WhitelistedIP | IPs that bypass all checks |
+| RateLimitRule | Custom rate limit rules |
+| LoginHistory | User login tracking |
+| SecurityLog | Security event logs |
+| SecuritySettings | Global settings (singleton) |
 
 ## License
 
@@ -164,7 +151,7 @@ MIT License
 ## Author
 
 Ali Nemati - [NEMATI AI](https://nemati.ai)
-"@
-```
 
-This README provides a comprehensive overview of the `nai-security` package, including its features, installation instructions, configuration, dependencies, and more. You can further customize it as needed.
+
+## Contributing 
+Contributions are welcome! Please open issues and pull requests on GitHub.
