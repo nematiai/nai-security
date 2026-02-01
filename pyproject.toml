@@ -1,0 +1,74 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nai-security"
+version = "1.0.0"
+description = "Django security app - IP/email/country blocking, rate limiting, login tracking, auto-blocking"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.11"
+authors = [
+    {name = "Ali Nemati", email = "ali@nemati.ai"}
+]
+keywords = [
+    "django",
+    "security",
+    "ip-blocking",
+    "rate-limiting",
+    "country-blocking",
+    "email-blocking",
+    "login-tracking",
+    "geoip",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Web Environment",
+    "Framework :: Django",
+    "Framework :: Django :: 4.2",
+    "Framework :: Django :: 5.0",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security",
+]
+dependencies = [
+    "django>=4.2",
+    "geoip2>=4.0",
+    "redis>=4.0",
+]
+
+[project.optional-dependencies]
+axes = ["django-axes>=6.0"]
+ratelimit = ["django-ratelimit>=4.0"]
+import-export = ["django-import-export>=3.0"]
+unfold = ["django-unfold>=0.10"]
+all = [
+    "django-axes>=6.0",
+    "django-ratelimit>=4.0",
+    "django-import-export>=3.0",
+    "django-unfold>=0.10",
+]
+dev = [
+    "pytest",
+    "pytest-django",
+    "black",
+    "ruff",
+]
+
+[project.urls]
+Homepage = "https://github.com/AliNemati22/nai-security"
+Documentation = "https://github.com/AliNemati22/nai-security#readme"
+Repository = "https://github.com/AliNemati22/nai-security"
+Issues = "https://github.com/AliNemati22/nai-security/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["nai_security*"]
+
+[tool.setuptools.package-data]
+nai_security = ["py.typed"]
