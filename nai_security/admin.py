@@ -1,14 +1,15 @@
 from django.contrib import admin
 from django.utils.html import format_html
 from unfold.admin import ModelAdmin
+from unfold.contrib.import_export.forms import ExportForm, ImportForm
 from import_export import resources
 from import_export.admin import ImportExportModelAdmin
-
 from .models import (
     BlockedCountry, BlockedIP, BlockedEmail, BlockedDomain,
     BlockedUserAgent, WhitelistedIP, AllowedCountry,
     RateLimitRule, LoginHistory, SecurityLog, SecuritySettings
 )
+
 
 # =============================================================================
 # UNREGISTER AXES DEFAULT ADMIN
@@ -82,6 +83,8 @@ class BlockedIPAdmin(ModelAdmin):
 @admin.register(BlockedEmail)
 class BlockedEmailAdmin(ImportExportModelAdmin, ModelAdmin):
     resource_class = BlockedEmailResource
+    import_form_class = ImportForm
+    export_form_class = ExportForm
     list_display = ['email_display', 'is_active', 'is_auto_blocked', 'reason_short', 'created_at']
     list_filter = ['is_active', 'is_auto_blocked', 'created_at']
     search_fields = ['email', 'reason']
@@ -103,6 +106,8 @@ class BlockedEmailAdmin(ImportExportModelAdmin, ModelAdmin):
 @admin.register(BlockedDomain)
 class BlockedDomainAdmin(ImportExportModelAdmin, ModelAdmin):
     resource_class = BlockedDomainResource
+    import_form_class = ImportForm
+    export_form_class = ExportForm
     list_display = ['domain', 'domain_type', 'is_active', 'is_auto_synced', 'created_at']
     list_filter = ['is_active', 'is_auto_synced', 'domain_type', 'created_at']
     search_fields = ['domain', 'reason']
@@ -157,8 +162,10 @@ class LoginHistoryAdmin(ModelAdmin):
     list_display = ['created_at', 'user', 'ip_address', 'country_code', 'device_type', 'suspicious_badge']
     list_filter = ['is_suspicious', 'country_code', 'device_type', 'created_at']
     search_fields = ['user__email', 'ip_address', 'country_code']
-    readonly_fields = ['user', 'ip_address', 'country_code', 'city', 'user_agent', 'device_type', 
-                      'browser', 'os', 'is_suspicious', 'suspicious_reason', 'session_key', 'created_at']
+    readonly_fields = [
+        'user', 'ip_address', 'country_code', 'city', 'user_agent', 'device_type',
+        'browser', 'os', 'is_suspicious', 'suspicious_reason', 'session_key', 'created_at'
+    ]
     ordering = ['-created_at']
 
     def suspicious_badge(self, obj):
@@ -179,8 +186,10 @@ class SecurityLogAdmin(ModelAdmin):
     list_display = ['created_at', 'action_badge', 'severity_badge', 'ip_address', 'country_code', 'path_short']
     list_filter = ['action', 'severity', 'country_code', 'created_at']
     search_fields = ['ip_address', 'path', 'details', 'user_email']
-    readonly_fields = ['ip_address', 'country_code', 'action', 'severity', 'path', 'method',
-                      'user_agent', 'details', 'user_email', 'created_at']
+    readonly_fields = [
+        'ip_address', 'country_code', 'action', 'severity', 'path', 'method',
+        'user_agent', 'details', 'user_email', 'created_at'
+    ]
     ordering = ['-created_at']
 
     def action_badge(self, obj):
@@ -220,9 +229,11 @@ class SecurityLogAdmin(ModelAdmin):
 
 @admin.register(SecuritySettings)
 class SecuritySettingsAdmin(ModelAdmin):
-    list_display = ['__str__', 'country_blocking_enabled', 'ip_blocking_enabled', 
-                   'email_blocking_enabled', 'login_history_enabled', 'updated_at']
-    
+    list_display = [
+        '__str__', 'country_blocking_enabled', 'ip_blocking_enabled',
+        'email_blocking_enabled', 'login_history_enabled', 'updated_at'
+    ]
+
     fieldsets = (
         ('Feature Toggles', {
             'fields': (
@@ -270,20 +281,22 @@ class SecuritySettingsAdmin(ModelAdmin):
 try:
     from axes.models import AccessAttempt as AxesAccessAttempt
     from .models import AccessAttempt  # Our proxy model
-    
+
     # Unregister original Axes admin
     try:
         admin.site.unregister(AxesAccessAttempt)
     except admin.sites.NotRegistered:
         pass
-    
+
     @admin.register(AccessAttempt)
     class AccessAttemptAdmin(ModelAdmin):
         list_display = ['attempt_time', 'ip_address', 'username', 'failures_since_start', 'path_info']
         list_filter = ['attempt_time', 'path_info']
         search_fields = ['ip_address', 'username', 'user_agent']
-        readonly_fields = ['user_agent', 'ip_address', 'username', 'http_accept', 
-                          'path_info', 'attempt_time', 'get_data', 'post_data', 'failures_since_start']
+        readonly_fields = [
+            'user_agent', 'ip_address', 'username', 'http_accept',
+            'path_info', 'attempt_time', 'get_data', 'post_data', 'failures_since_start'
+        ]
         ordering = ['-attempt_time']
 
         def has_add_permission(self, request):
