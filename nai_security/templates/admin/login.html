@@ -1,0 +1,267 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    .login-container {
+        max-width: 400px;
+        margin: 100px auto;
+        padding: 30px;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .login-header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    
+    .login-header h1 {
+        font-size: 24px;
+        color: #333;
+        margin-bottom: 10px;
+    }
+    
+    .lockout-warning {
+        background: #fff3cd;
+        border: 1px solid #ffc107;
+        border-radius: 6px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .lockout-error {
+        background: #f8d7da;
+        border: 1px solid #dc3545;
+        border-radius: 6px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .lockout-icon {
+        font-size: 48px;
+        text-align: center;
+        margin-bottom: 15px;
+    }
+    
+    .lockout-title {
+        font-size: 18px;
+        font-weight: bold;
+        color: #856404;
+        margin-bottom: 10px;
+        text-align: center;
+    }
+    
+    .lockout-error .lockout-title {
+        color: #721c24;
+    }
+    
+    .lockout-message {
+        color: #856404;
+        font-size: 14px;
+        line-height: 1.5;
+        text-align: center;
+    }
+    
+    .lockout-error .lockout-message {
+        color: #721c24;
+    }
+    
+    .lockout-timer {
+        font-size: 32px;
+        font-weight: bold;
+        text-align: center;
+        color: #dc3545;
+        margin: 20px 0;
+        font-family: monospace;
+    }
+    
+    .attempt-counter {
+        text-align: center;
+        color: #666;
+        font-size: 13px;
+        margin-top: 10px;
+    }
+    
+    .form-row {
+        margin-bottom: 15px;
+    }
+    
+    .form-row label {
+        display: block;
+        margin-bottom: 5px;
+        color: #333;
+        font-weight: 500;
+    }
+    
+    .form-row input {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+    }
+    
+    .submit-row {
+        margin-top: 20px;
+    }
+    
+    .submit-row input[type="submit"] {
+        width: 100%;
+        padding: 12px;
+        background: #417690;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background 0.3s;
+    }
+    
+    .submit-row input[type="submit"]:hover {
+        background: #2e5566;
+    }
+    
+    .submit-row input[type="submit"]:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+    }
+    
+    .progressive-info {
+        background: #e7f3ff;
+        border: 1px solid #b3d9ff;
+        border-radius: 6px;
+        padding: 12px;
+        margin-top: 15px;
+        font-size: 12px;
+        color: #004085;
+    }
+    
+    .progressive-info ul {
+        margin: 8px 0 0 20px;
+        padding: 0;
+    }
+    
+    .progressive-info li {
+        margin: 3px 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <div class="login-header">
+        <h1>{% trans 'Admin Login' %}</h1>
+    </div>
+    
+    {% if request.lockout_data.locked_out %}
+    <div class="lockout-error">
+        <div class="lockout-icon">🔒</div>
+        <div class="lockout-title">Account Temporarily Locked</div>
+        <div class="lockout-message">
+            Too many failed login attempts.<br>
+            Please wait before trying again.
+        </div>
+        <div class="lockout-timer" id="countdown-timer">
+            Calculating...
+        </div>
+        <div class="attempt-counter">
+            Failed attempts: <strong>{{ request.lockout_data.attempt_count }}</strong>
+        </div>
+    </div>
+    
+    <script>
+        (function() {
+            let secondsRemaining = {{ request.lockout_data.seconds_remaining }};
+            const timerElement = document.getElementById('countdown-timer');
+            const submitButton = document.querySelector('input[type="submit"]');
+            
+            if (submitButton) {
+                submitButton.disabled = true;
+            }
+            
+            function updateTimer() {
+                if (secondsRemaining <= 0) {
+                    timerElement.textContent = 'You can try again now';
+                    if (submitButton) {
+                        submitButton.disabled = false;
+                    }
+                    location.reload();
+                    return;
+                }
+                
+                const minutes = Math.floor(secondsRemaining / 60);
+                const seconds = secondsRemaining % 60;
+                timerElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                
+                secondsRemaining--;
+                setTimeout(updateTimer, 1000);
+            }
+            
+            updateTimer();
+        })();
+    </script>
+    
+    {% elif request.lockout_data.attempt_count > 0 %}
+    <div class="lockout-warning">
+        <div class="lockout-title">⚠️ Warning</div>
+        <div class="lockout-message">
+            Failed attempts: <strong>{{ request.lockout_data.attempt_count }}</strong><br>
+            {% if request.lockout_data.attempt_count <= 3 %}
+                No lockout yet. Be careful with your password.
+            {% elif request.lockout_data.attempt_count <= 6 %}
+                Next failure: 5 minute lockout
+            {% elif request.lockout_data.attempt_count <= 9 %}
+                Next failure: 10 minute lockout
+            {% elif request.lockout_data.attempt_count <= 12 %}
+                Next failure: 15 minute lockout
+            {% else %}
+                Next failure: 1 hour lockout
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+    
+    {% if form.errors %}
+    <div class="lockout-error">
+        <div class="lockout-title">Login Failed</div>
+        <div class="lockout-message">
+            {{ form.errors }}
+        </div>
+    </div>
+    {% endif %}
+    
+    <form method="post" id="login-form">
+        {% csrf_token %}
+        
+        <div class="form-row">
+            <label for="id_username">Username:</label>
+            {{ form.username }}
+        </div>
+        
+        <div class="form-row">
+            <label for="id_password">Password:</label>
+            {{ form.password }}
+        </div>
+        
+        <input type="hidden" name="next" value="{{ next }}">
+        
+        <div class="submit-row">
+            <input type="submit" value="{% trans 'Log in' %}">
+        </div>
+    </form>
+    
+    <div class="progressive-info">
+        <strong>Security Notice:</strong>
+        <ul>
+            <li>1-3 failed attempts: No lockout</li>
+            <li>4-6 failed attempts: 5 minute lockout</li>
+            <li>7-9 failed attempts: 10 minute lockout</li>
+            <li>10-12 failed attempts: 15 minute lockout</li>
+            <li>13+ failed attempts: 1 hour lockout</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}
