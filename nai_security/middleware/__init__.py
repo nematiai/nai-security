@@ -2,8 +2,8 @@ import logging
 from django.http import HttpResponseForbidden
 from django.core.cache import cache
 
-from .utils import get_client_ip, get_country_from_ip
-from .models import SecurityLog, SecuritySettings
+from ..utils import get_client_ip, get_country_from_ip
+from ..models import SecurityLog, SecuritySettings
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +73,7 @@ class SecurityMiddleware:
         if cached is not None:
             return cached
         
-        from .models import WhitelistedIP
+        from ..models import WhitelistedIP
         result = WhitelistedIP.is_whitelisted(ip_address)
         cache.set(cache_key, result, 300)
         return result
@@ -84,7 +84,7 @@ class SecurityMiddleware:
         if cached is not None:
             return cached
         
-        from .models import BlockedIP
+        from ..models import BlockedIP
         from django.utils import timezone
         
         blocked = BlockedIP.objects.filter(ip_address=ip_address, is_active=True).first()
@@ -105,7 +105,7 @@ class SecurityMiddleware:
         if cached is not None:
             return cached
         
-        from .models import BlockedCountry
+        from ..models import BlockedCountry
         result = BlockedCountry.objects.filter(code=country_code, is_active=True).exists()
         cache.set(cache_key, result, 300)
         return result
@@ -116,7 +116,7 @@ class SecurityMiddleware:
         if cached is not None:
             return cached
         
-        from .models import AllowedCountry
+        from ..models import AllowedCountry
         result = AllowedCountry.is_country_allowed(country_code)
         cache.set(cache_key, result, 300)
         return result
@@ -125,7 +125,7 @@ class SecurityMiddleware:
         if not user_agent:
             return False
         
-        from .models import BlockedUserAgent
+        from ..models import BlockedUserAgent
         is_blocked, pattern = BlockedUserAgent.is_user_agent_blocked(user_agent)
         
         if is_blocked and pattern:
