@@ -71,4 +71,7 @@ where = ["."]
 include = ["nai_security*"]
 
 [tool.setuptools.package-data]
-nai_security = ["py.typed"]
+nai_security = [
+    "py.typed",
+    "templates/**/*.html",
+]

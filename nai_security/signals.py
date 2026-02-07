@@ -111,3 +111,30 @@ try:
 
 except ImportError:
     logger.debug("django-axes not installed, skipping signal registration")
+
+
+# Progressive Lockout Signals
+try:
+    from axes.signals import user_locked_out
+    from django.contrib.auth.signals import user_login_failed, user_logged_in
+    from .handlers.progressive_lockout import ProgressiveLockoutHandler
+
+    @receiver(user_login_failed)
+    def handle_login_failed(sender, credentials, request, **kwargs):
+        """Handle failed login attempts with progressive lockout."""
+        if request:
+            ProgressiveLockoutHandler.user_login_failed(
+                sender=sender,
+                credentials=credentials,
+                request=request,
+                **kwargs
+            )
+
+    @receiver(user_logged_in)
+    def handle_login_success(sender, request, user, **kwargs):
+        """Reset lockout on successful login."""
+        if request:
+            ProgressiveLockoutHandler.reset_attempts(request)
+
+except ImportError:
+    logger.debug("django-axes not installed, progressive lockout signals not registered")
