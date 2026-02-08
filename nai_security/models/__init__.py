@@ -9,7 +9,6 @@ from .rate_limit_rule import RateLimitRule
 from .login_history import LoginHistory
 from .security_log import SecurityLog
 from .security_settings import SecuritySettings
-from .axes_proxy import AccessAttempt
 
 __all__ = [
     'BlockedCountry',
@@ -23,5 +22,4 @@ __all__ = [
     'LoginHistory',
     'SecurityLog',
     'SecuritySettings',
-    'AccessAttempt',
 ]

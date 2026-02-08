@@ -263,38 +263,3 @@ class SecuritySettingsAdmin(ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
-
-
-# =============================================================================
-# AXES ADMIN (PROXY MODEL UNDER SECURITY)
-# =============================================================================
-try:
-    from axes.models import AccessAttempt as AxesAccessAttempt
-    from .models import AccessAttempt  # Our proxy model
-    
-    # Unregister original Axes admin
-    try:
-        admin.site.unregister(AxesAccessAttempt)
-    except admin.sites.NotRegistered:
-        pass
-    
-    @admin.register(AccessAttempt)
-    class AccessAttemptAdmin(ModelAdmin):
-        list_display = ['attempt_time', 'ip_address', 'username', 'failures_since_start', 'path_info']
-        list_filter = ['attempt_time', 'path_info']
-        search_fields = ['ip_address', 'username', 'user_agent']
-        readonly_fields = ['user_agent', 'ip_address', 'username', 'http_accept', 
-                          'path_info', 'attempt_time', 'get_data', 'post_data', 'failures_since_start']
-        ordering = ['-attempt_time']
-
-        def has_add_permission(self, request):
-            return False
-
-        def has_change_permission(self, request, obj=None):
-            return False
-
-        def has_delete_permission(self, request, obj=None):
-            return True  # Allow clearing attempts
-
-except ImportError:
-    pass

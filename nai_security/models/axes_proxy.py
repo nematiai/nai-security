@@ -1,17 +1,7 @@
-from django.db import models
+"""
+Axes proxy models - disabled to avoid migration issues.
+Access Axes models directly from axes.models if needed.
+"""
 
-try:
-    from axes.models import AccessAttempt as AxesAccessAttempt
-
-    class AccessAttempt(AxesAccessAttempt):
-        """Proxy model to show Axes AccessAttempt under Security app."""
-        
-        class Meta:
-            proxy = True
-            verbose_name = "Access Attempt"
-            verbose_name_plural = "Access Attempts"
-            app_label = 'nai_security'
-
-except ImportError:
-    # axes not installed
-    AccessAttempt = None
+# Proxy model removed to prevent CI/CD migration checks from failing
+AccessAttempt = None
