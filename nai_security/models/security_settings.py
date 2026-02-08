@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.cache import cache
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 
 class SecuritySettings(models.Model):
@@ -20,6 +21,13 @@ class SecuritySettings(models.Model):
     auto_block_ip_duration_hours = models.PositiveIntegerField(
         default=24,
         help_text="How long to auto-block an IP (hours). 0 = permanent"
+    )
+    
+    # Login attempt limits
+    max_login_attempts = models.PositiveIntegerField(
+        default=5,
+        validators=[MinValueValidator(1), MaxValueValidator(100)],
+        help_text="Maximum failed login attempts before account lockout (1-100)"
     )
     
     auto_block_country_threshold = models.PositiveIntegerField(

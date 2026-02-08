@@ -234,6 +234,7 @@ class SecuritySettingsAdmin(ModelAdmin):
         }),
         ('Auto-Block IP Settings', {
             'fields': (
+                'max_login_attempts',
                 'auto_block_ip_threshold', 'auto_block_ip_window_hours',
                 'auto_block_ip_duration_hours',
             )

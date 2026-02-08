@@ -17,6 +17,7 @@ Django security package for IP blocking, country blocking, email blocking, rate 
 - **Login History** - Track user logins with anomaly detection
 - **Auto-Blocking** - Automatically block IPs/countries based on attack patterns
 - **Security Logs** - Comprehensive logging of all security events
+- ✅ **Dynamic Login Attempt Limits** - Configurable max login attempts via admin panel (integrates with django-axes)
 
 ## Installation
 
@@ -156,6 +157,17 @@ CELERY_BEAT_SCHEDULE = {
 | `LoginHistory` | User login tracking |
 | `SecurityLog` | Security event logs |
 | `SecuritySettings` | Global settings (singleton) |
+
+## Axes Integration
+
+To enable dynamic login attempt control:
+
+```python
+# settings.py
+AXES_HANDLER = 'nai_security.handlers.DynamicAxesHandler'
+```
+
+Now admins can change the lockout threshold in real-time via the Security Settings admin panel.
 
 ## License
 
