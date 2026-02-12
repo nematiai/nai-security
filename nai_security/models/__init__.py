@@ -9,6 +9,7 @@ from .rate_limit_rule import RateLimitRule
 from .login_history import LoginHistory
 from .security_log import SecurityLog
 from .security_settings import SecuritySettings
+from .whitelisted_user import WhitelistedUser
 
 __all__ = [
     'BlockedCountry',
@@ -22,4 +23,5 @@ __all__ = [
     'LoginHistory',
     'SecurityLog',
     'SecuritySettings',
+    'WhitelistedUser',
 ]

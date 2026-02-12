@@ -9,6 +9,7 @@ from .models import (
     BlockedUserAgent, WhitelistedIP, AllowedCountry,
     RateLimitRule, LoginHistory, SecurityLog, SecuritySettings
 )
+from .admin.whitelisted_user_admin import WhitelistedUserAdmin
 
 # =============================================================================
 # UNREGISTER AXES DEFAULT ADMIN
