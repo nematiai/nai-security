@@ -61,6 +61,7 @@ def generate_security_report():
     """
     from django.utils import timezone
     from datetime import timedelta
+    from django.db.models import Count
     from .models import SecurityLog, BlockedIP, LoginHistory
     
     try:
@@ -72,13 +73,13 @@ def generate_security_report():
         blocks_by_action = dict(
             SecurityLog.objects.filter(created_at__gte=yesterday)
             .values_list('action')
-            .annotate(count=models.Count('id'))
+            .annotate(count=Count('id'))
         )
         
         top_blocked_ips = list(
             SecurityLog.objects.filter(created_at__gte=yesterday)
             .values('ip_address')
-            .annotate(count=models.Count('id'))
+            .annotate(count=Count('id'))
             .order_by('-count')[:10]
         )
         
@@ -86,7 +87,7 @@ def generate_security_report():
             SecurityLog.objects.filter(created_at__gte=yesterday)
             .exclude(country_code='')
             .values('country_code')
-            .annotate(count=models.Count('id'))
+            .annotate(count=Count('id'))
             .order_by('-count')[:10]
         )
         
@@ -119,7 +120,3 @@ def generate_security_report():
     except Exception as e:
         logger.error(f"Report generation failed: {e}")
         return {'error': str(e)}
-
-
-# Import for query
-from django.db import models

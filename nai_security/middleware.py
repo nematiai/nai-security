@@ -1,6 +1,7 @@
 import logging
 from django.http import HttpResponseForbidden
 from django.core.cache import cache
+from django.db.models import F
 
 from .utils import get_client_ip, get_country_from_ip
 from .models import SecurityLog, SecuritySettings
@@ -131,7 +132,7 @@ class SecurityMiddleware:
         if is_blocked and pattern:
             # Increment block count
             BlockedUserAgent.objects.filter(pk=pattern.pk).update(
-                block_count=models.F('block_count') + 1
+                block_count=F('block_count') + 1
             )
         
         return is_blocked
@@ -174,7 +175,3 @@ class RateLimitLoggingMiddleware:
             logger.warning(f"RATE_LIMIT: {ip_address} - {request.path}")
         
         return response
-
-
-# Import F for query expressions
-from django.db import models
