@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.core.cache import cache
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -23,13 +24,22 @@ class SecuritySettings(models.Model):
         help_text="How long to auto-block an IP (hours). 0 = permanent"
     )
     
-    # Login attempt limits
+    # Login attempt limits (django-axes)
     max_login_attempts = models.PositiveIntegerField(
         default=5,
         validators=[MinValueValidator(1), MaxValueValidator(100)],
         help_text="Maximum failed login attempts before account lockout (1-100)"
     )
-    
+    axes_cooloff_minutes = models.PositiveIntegerField(
+        default=0,
+        validators=[MaxValueValidator(1440)],
+        help_text="Minutes before locked account auto-unlocks (0 = permanent lock until manual reset)"
+    )
+    axes_attempt_expiry_enabled = models.BooleanField(
+        default=False,
+        help_text="Each failed attempt expires independently (requires cooloff > 0)"
+    )
+
     auto_block_country_threshold = models.PositiveIntegerField(
         default=100,
         help_text="Consider auto-blocking country after this many attacks"
@@ -104,12 +114,32 @@ class SecuritySettings(models.Model):
     def __str__(self):
         return "Security Settings"
 
+    def clean(self):
+        errors = {}
+        if self.axes_attempt_expiry_enabled and self.axes_cooloff_minutes == 0:
+            errors['axes_attempt_expiry_enabled'] = (
+                "Attempt expiry requires cooloff time > 0 minutes."
+            )
+        if errors:
+            raise ValidationError(errors)
+
     def save(self, *args, **kwargs):
         # Ensure only one instance exists (singleton)
         self.pk = 1
         super().save(*args, **kwargs)
         # Clear cache when settings change
         cache.delete('security_settings')
+        # Propagate axes settings changes at runtime
+        try:
+            from datetime import timedelta
+            from django.conf import settings as django_settings
+            django_settings.AXES_USE_ATTEMPT_EXPIRATION = self.axes_attempt_expiry_enabled
+            if self.axes_cooloff_minutes > 0:
+                django_settings.AXES_COOLOFF_TIME = timedelta(minutes=self.axes_cooloff_minutes)
+            else:
+                django_settings.AXES_COOLOFF_TIME = None
+        except Exception:
+            pass
 
     @classmethod
     def get_settings(cls) -> 'SecuritySettings':

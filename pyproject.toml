@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "nai-security"
-version = "1.6.1"
+version = "1.2.1"
 description = "Django security app - IP/email/country blocking, rate limiting, login tracking, auto-blocking"
 readme = "README.md"
 license = {text = "MIT"}
@@ -28,12 +28,15 @@ classifiers = [
     "Framework :: Django",
     "Framework :: Django :: 4.2",
     "Framework :: Django :: 5.0",
+    "Framework :: Django :: 5.2",
+    "Framework :: Django :: 6.0",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Security",
 ]
 dependencies = [
@@ -43,12 +46,12 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-axes = ["django-axes>=6.0"]
+axes = ["django-axes>=8.3,<9.0"]
 ratelimit = ["django-ratelimit>=4.0"]
 import-export = ["django-import-export>=3.0"]
 unfold = ["django-unfold>=0.10"]
 all = [
-    "django-axes>=6.0",
+    "django-axes>=8.3,<9.0",
     "django-ratelimit>=4.0",
     "django-import-export>=3.0",
     "django-unfold>=0.10",
@@ -65,6 +68,9 @@ Homepage = "https://github.com/nematiai/nai-security"
 Documentation = "https://github.com/nematiai/nai-security#readme"
 Repository = "https://github.com/nematiai/nai-security"
 Issues = "https://github.com/nematiai/nai-security/issues"
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "tests.settings"
 
 [tool.setuptools.packages.find]
 where = ["."]

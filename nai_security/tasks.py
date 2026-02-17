@@ -1,5 +1,13 @@
 import logging
-from celery import shared_task
+
+try:
+    from celery import shared_task
+except ImportError:
+    def shared_task(*args, **kwargs):
+        """Dummy decorator when Celery is not installed."""
+        def decorator(func):
+            return func
+        return decorator(args[0]) if args and callable(args[0]) else decorator
 
 logger = logging.getLogger(__name__)
 

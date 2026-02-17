@@ -54,6 +54,8 @@ TEMPLATES = [{
 
 AXES_ENABLED = True
 AXES_FAILURE_LIMIT = 5
+AXES_HANDLER = 'nai_security.handlers.axes_integration.DynamicAxesHandler'
+AXES_COOLOFF_TIME = None
 AUTHENTICATION_BACKENDS = [
     'axes.backends.AxesStandaloneBackend',
     'django.contrib.auth.backends.ModelBackend',

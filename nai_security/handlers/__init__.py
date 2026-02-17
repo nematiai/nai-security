@@ -1,3 +1,5 @@
-from .axes_integration import DynamicAxesHandler
-
-__all__ = ['DynamicAxesHandler']
+try:
+    from .axes_integration import DynamicAxesHandler
+    __all__ = ['DynamicAxesHandler']
+except ImportError:
+    pass
