@@ -57,6 +57,9 @@ class DynamicAxesHandlerConfigTest(TestCase):
         self.assertTrue(callable(django_settings.AXES_FAILURE_LIMIT))
 
     def test_configure_preserves_original_as_fallback(self):
+        # Remove cached fallback so configure_dynamic_settings picks up new value
+        if hasattr(django_settings, 'AXES_FAILURE_LIMIT_DEFAULT'):
+            del django_settings.AXES_FAILURE_LIMIT_DEFAULT
         django_settings.AXES_FAILURE_LIMIT = 3
         DynamicAxesHandler.configure_dynamic_settings()
         self.assertEqual(django_settings.AXES_FAILURE_LIMIT_DEFAULT, 3)

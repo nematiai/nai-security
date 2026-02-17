@@ -44,9 +44,10 @@ class DynamicAxesHandler(AxesDatabaseHandler):
         Configure axes settings to use dynamic values from SecuritySettings.
         Called from NaiSecurityConfig.ready().
         """
-        # Preserve the original AXES_FAILURE_LIMIT as a fallback
-        original_limit = getattr(django_settings, 'AXES_FAILURE_LIMIT', 5)
-        django_settings.AXES_FAILURE_LIMIT_DEFAULT = original_limit
+        # Preserve the original AXES_FAILURE_LIMIT as a fallback (only on first call)
+        if not hasattr(django_settings, 'AXES_FAILURE_LIMIT_DEFAULT'):
+            original_limit = getattr(django_settings, 'AXES_FAILURE_LIMIT', 5)
+            django_settings.AXES_FAILURE_LIMIT_DEFAULT = original_limit
 
         # Set failure limit to our dynamic callable
         django_settings.AXES_FAILURE_LIMIT = get_dynamic_failure_limit
