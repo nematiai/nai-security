@@ -83,10 +83,11 @@ python manage.py download_geoip
 - redis >= 4.0
 
 **Optional:**
-- django-axes >= 8.3 (login attempt tracking and lockout)
-- django-ratelimit >= 4.0 (rate limiting)
-- django-import-export >= 3.0 (admin import/export)
-- django-unfold >= 0.10 (admin theme)
+- `django-axes >= 8.3` — login attempt tracking and lockout; without it axes features are silently disabled
+- `django-ratelimit >= 4.0` — rate limiting per endpoint
+- `django-import-export >= 3.0` — admin import/export for blocked emails/domains; without it those buttons are hidden
+- `django-unfold >= 0.10` — admin UI theme; without it falls back to standard Django admin
+- `celery` — background tasks (auto-block processing, sync, reports); without it tasks are no-ops
 
 ## Axes Integration
 
@@ -114,9 +115,11 @@ This gives you admin-configurable control over:
 |---------|-------------|
 | **Max login attempts** | Failed attempts before lockout (default: 5) |
 | **Cooloff time** | Minutes before locked accounts auto-unlock (0 = permanent) |
-| **Attempt expiry** | Each failed attempt expires independently |
+| **Attempt expiry** | Each failed attempt expires independently — requires cooloff > 0 |
 
 All changes take effect immediately — no server restart required.
+
+> **Validation:** Enabling attempt expiry with cooloff set to 0 will raise a validation error in the admin panel.
 
 ## Management Commands
 
@@ -175,7 +178,7 @@ CELERY_BEAT_SCHEDULE = {
 ## Testing
 
 ```bash
-DJANGO_SETTINGS_MODULE=tests.settings python -m pytest tests/ -v
+DJANGO_SETTINGS_MODULE=tests.settings python3 -m pytest tests/ -v
 ```
 
 ## License

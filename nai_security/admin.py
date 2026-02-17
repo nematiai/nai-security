@@ -1,9 +1,16 @@
 from django.contrib import admin
 from django.utils.html import format_html
 from django.utils import timezone
-from unfold.admin import ModelAdmin
-from import_export import resources
-from import_export.admin import ImportExportModelAdmin
+try:
+    from unfold.admin import ModelAdmin
+except ImportError:
+    from django.contrib.admin import ModelAdmin
+try:
+    from import_export import resources
+    from import_export.admin import ImportExportModelAdmin
+except ImportError:
+    resources = None
+    ImportExportModelAdmin = ModelAdmin
 
 from .models import (
     BlockedCountry, BlockedIP, BlockedEmail, BlockedDomain,
@@ -27,18 +34,21 @@ except (ImportError, admin.sites.NotRegistered):
     AXES_INSTALLED = False
 
 
-class BlockedEmailResource(resources.ModelResource):
-    class Meta:
-        model = BlockedEmail
-        fields = ("id", "email", "reason", "is_active", "is_auto_blocked", "created_at")
-        import_id_fields = ("email",)
+if resources is not None:
+    class BlockedEmailResource(resources.ModelResource):
+        class Meta:
+            model = BlockedEmail
+            fields = ("id", "email", "reason", "is_active", "is_auto_blocked", "created_at")
+            import_id_fields = ("email",)
 
-
-class BlockedDomainResource(resources.ModelResource):
-    class Meta:
-        model = BlockedDomain
-        fields = ("id", "domain", "domain_type", "reason", "is_active", "created_at")
-        import_id_fields = ("domain",)
+    class BlockedDomainResource(resources.ModelResource):
+        class Meta:
+            model = BlockedDomain
+            fields = ("id", "domain", "domain_type", "reason", "is_active", "created_at")
+            import_id_fields = ("domain",)
+else:
+    BlockedEmailResource = None
+    BlockedDomainResource = None
 
 
 @admin.register(BlockedCountry)
@@ -71,7 +81,7 @@ class BlockedIPAdmin(ModelAdmin):
 
 @admin.register(BlockedEmail)
 class BlockedEmailAdmin(ImportExportModelAdmin, ModelAdmin):
-    resource_class = BlockedEmailResource
+    resource_class = BlockedEmailResource if BlockedEmailResource is not None else None
     list_display = ["email_display", "is_active", "is_auto_blocked", "reason_short", "created_at"]
     list_filter = ["is_active", "is_auto_blocked", "created_at"]
     search_fields = ["email", "reason"]
@@ -92,7 +102,7 @@ class BlockedEmailAdmin(ImportExportModelAdmin, ModelAdmin):
 
 @admin.register(BlockedDomain)
 class BlockedDomainAdmin(ImportExportModelAdmin, ModelAdmin):
-    resource_class = BlockedDomainResource
+    resource_class = BlockedDomainResource if BlockedDomainResource is not None else None
     list_display = ["domain", "domain_type", "is_active", "is_auto_synced", "created_at"]
     list_filter = ["is_active", "is_auto_synced", "domain_type", "created_at"]
     search_fields = ["domain", "reason"]

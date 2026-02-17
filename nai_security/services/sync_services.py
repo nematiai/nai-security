@@ -1,5 +1,4 @@
 import logging
-import requests
 from django.utils import timezone
 
 from ..models import BlockedDomain, BlockedUserAgent, SecuritySettings
@@ -30,6 +29,7 @@ class DisposableDomainSync:
         
         for source_url in cls.SOURCES:
             try:
+                import requests
                 response = requests.get(source_url, timeout=30)
                 response.raise_for_status()
                 
