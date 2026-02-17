@@ -13,7 +13,8 @@ Django security package for IP blocking, country blocking, email blocking, rate 
 - **Login History** - Track user logins with anomaly detection
 - **Auto-Blocking** - Automatically block IPs/countries based on attack patterns
 - **Security Logs** - Comprehensive logging of all security events
-- ✅ **Dynamic Login Attempt Limits** - Configurable max login attempts via admin panel (integrates with django-axes)
+- **Axes Integration** - Dynamic login attempt limits, cooloff time, and per-attempt expiry via admin panel (requires django-axes >= 8.3)
+- **Whitelisted Users** - Exempt specific users from security checks
 
 ## Installation
 
@@ -21,22 +22,16 @@ Django security package for IP blocking, country blocking, email blocking, rate 
 pip install nai-security
 ```
 
+With all optional dependencies:
+
+```bash
+pip install nai-security[all]
+```
+
 Or install from GitHub:
 
 ```bash
 pip install git+https://github.com/nematiai/nai-security.git
-```
-
-Or add to `requirements.txt`:
-
-```
-nai-security==1.5.1
-```
-
-Or from GitHub in requirements.txt:
-
-```
-git+https://github.com/nematiai/nai-security.git@main#egg=nai-security
 ```
 
 ## Quick Start
@@ -56,26 +51,21 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     ...
-    "nai_security.middleware.SecurityMiddleware",  # After SecurityMiddleware
+    "nai_security.middleware.SecurityMiddleware",
     ...
-    "nai_security.middleware.RateLimitLoggingMiddleware",  # Near the end
+    "nai_security.middleware.RateLimitLoggingMiddleware",
 ]
+```
 
 ### 3. Configure Settings
 
 ```python
-# GeoIP database path
 GEOIP_PATH = "/path/to/GeoLite2-Country.mmdb"
-
-# Optional: Enable/disable middleware
-SECURITY_MIDDLEWARE_ENABLED = True
-RATELIMIT_MIDDLEWARE_ENABLED = True
 ```
 
 ### 4. Run Migrations
 
 ```bash
-python manage.py makemigrations nai_security
 python manage.py migrate
 ```
 
@@ -93,24 +83,40 @@ python manage.py download_geoip
 - redis >= 4.0
 
 **Optional:**
-- django-axes >= 6.0 (login attempt tracking)
+- django-axes >= 8.3 (login attempt tracking and lockout)
 - django-ratelimit >= 4.0 (rate limiting)
 - django-import-export >= 3.0 (admin import/export)
 - django-unfold >= 0.10 (admin theme)
 
-Install all optional dependencies:
+## Axes Integration
 
-```bash
-pip install nai-security[all]
+Enable brute-force protection with dynamic settings controlled from the admin panel:
+
+```python
+# settings.py
+INSTALLED_APPS = [
+    ...
+    "axes",
+    "nai_security",
+]
+
+AXES_HANDLER = 'nai_security.handlers.axes_integration.DynamicAxesHandler'
+
+AUTHENTICATION_BACKENDS = [
+    'axes.backends.AxesStandaloneBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
 ```
 
-## Environment Variables
+This gives you admin-configurable control over:
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `GEOIP_PATH` | `./geoip/GeoLite2-Country.mmdb` | Path to GeoIP database |
-| `SECURITY_MIDDLEWARE_ENABLED` | `True` | Enable security middleware |
-| `RATELIMIT_MIDDLEWARE_ENABLED` | `True` | Enable rate limit logging |
+| Setting | Description |
+|---------|-------------|
+| **Max login attempts** | Failed attempts before lockout (default: 5) |
+| **Cooloff time** | Minutes before locked accounts auto-unlock (0 = permanent) |
+| **Attempt expiry** | Each failed attempt expires independently |
+
+All changes take effect immediately — no server restart required.
 
 ## Management Commands
 
@@ -126,25 +132,25 @@ python manage.py sync_security_lists --bots-only
 
 ## Celery Tasks
 
-Add to your Celery beat schedule:
-
 ```python
+from celery.schedules import crontab
+
 CELERY_BEAT_SCHEDULE = {
     'security-auto-blocks': {
         'task': 'security.process_auto_blocks',
-        'schedule': crontab(minute='*/5'),  # Every 5 minutes
+        'schedule': crontab(minute='*/5'),
     },
     'security-cleanup-expired': {
         'task': 'security.cleanup_expired_blocks',
-        'schedule': crontab(minute=0, hour='*'),  # Every hour
+        'schedule': crontab(minute=0, hour='*'),
     },
     'security-sync-lists': {
         'task': 'security.sync_security_lists',
-        'schedule': crontab(minute=0, hour=0, day_of_week=0),  # Weekly
+        'schedule': crontab(minute=0, hour=0, day_of_week=0),
     },
     'security-daily-report': {
         'task': 'security.generate_security_report',
-        'schedule': crontab(minute=0, hour=6),  # Daily at 6 AM
+        'schedule': crontab(minute=0, hour=6),
     },
 }
 ```
@@ -160,21 +166,17 @@ CELERY_BEAT_SCHEDULE = {
 | `BlockedDomain` | Blocked email domains |
 | `BlockedUserAgent` | Blocked user agents |
 | `WhitelistedIP` | IPs that bypass all checks |
+| `WhitelistedUser` | Users exempted from security checks |
 | `RateLimitRule` | Custom rate limit rules |
 | `LoginHistory` | User login tracking |
 | `SecurityLog` | Security event logs |
 | `SecuritySettings` | Global settings (singleton) |
 
-## Axes Integration
+## Testing
 
-To enable dynamic login attempt control:
-
-```python
-# settings.py
-AXES_HANDLER = 'nai_security.handlers.DynamicAxesHandler'
+```bash
+DJANGO_SETTINGS_MODULE=tests.settings python -m pytest tests/ -v
 ```
-
-Now admins can change the lockout threshold in real-time via the Security Settings admin panel.
 
 ## License
 
@@ -183,5 +185,3 @@ MIT License
 ## Author
 
 Ali Nemati - [NEMATI AI](https://nemati.ai)
-```
-

@@ -137,6 +137,11 @@ class SecuritySettingsTest(TestCase):
         self.assertEqual(s.max_login_attempts, 5)
         self.assertTrue(s.ip_blocking_enabled)
 
+    def test_axes_defaults(self):
+        s = SecuritySettings.get_settings()
+        self.assertEqual(s.axes_cooloff_minutes, 0)
+        self.assertFalse(s.axes_attempt_expiry_enabled)
+
 
 class SecurityLogTest(TestCase):
     def test_log_event(self):

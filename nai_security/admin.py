@@ -267,9 +267,15 @@ class SecuritySettingsAdmin(ModelAdmin):
                 "login_history_enabled",
             )
         }),
-        ("Auto-Block IP Settings", {
+        ("Axes Login Protection", {
             "fields": (
                 "max_login_attempts",
+                "axes_cooloff_minutes",
+                "axes_attempt_expiry_enabled",
+            )
+        }),
+        ("Auto-Block IP Settings", {
+            "fields": (
                 "auto_block_ip_threshold", "auto_block_ip_window_hours",
                 "auto_block_ip_duration_hours",
             )

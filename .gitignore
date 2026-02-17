@@ -15,3 +15,6 @@ venv/
 .idea/
 .vscode/
 *.sqlite3
+.claude
+
+CLAUDE.md
