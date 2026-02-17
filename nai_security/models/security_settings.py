@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.core.cache import cache
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -112,6 +113,15 @@ class SecuritySettings(models.Model):
 
     def __str__(self):
         return "Security Settings"
+
+    def clean(self):
+        errors = {}
+        if self.axes_attempt_expiry_enabled and self.axes_cooloff_minutes == 0:
+            errors['axes_attempt_expiry_enabled'] = (
+                "Attempt expiry requires cooloff time > 0 minutes."
+            )
+        if errors:
+            raise ValidationError(errors)
 
     def save(self, *args, **kwargs):
         # Ensure only one instance exists (singleton)

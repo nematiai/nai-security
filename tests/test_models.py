@@ -142,6 +142,21 @@ class SecuritySettingsTest(TestCase):
         self.assertEqual(s.axes_cooloff_minutes, 0)
         self.assertFalse(s.axes_attempt_expiry_enabled)
 
+    def test_clean_attempt_expiry_requires_cooloff(self):
+        from django.core.exceptions import ValidationError
+        s = SecuritySettings.get_settings()
+        s.axes_attempt_expiry_enabled = True
+        s.axes_cooloff_minutes = 0
+        with self.assertRaises(ValidationError) as ctx:
+            s.full_clean()
+        self.assertIn('axes_attempt_expiry_enabled', ctx.exception.message_dict)
+
+    def test_clean_attempt_expiry_with_cooloff_passes(self):
+        s = SecuritySettings.get_settings()
+        s.axes_attempt_expiry_enabled = True
+        s.axes_cooloff_minutes = 30
+        s.full_clean()  # Should not raise
+
 
 class SecurityLogTest(TestCase):
     def test_log_event(self):
