@@ -1,5 +1,8 @@
 # NAI Security
 
+[![PyPI version](https://img.shields.io/pypi/v/nai-security)](https://pypi.org/project/nai-security/)
+[![Django Packages](https://img.shields.io/badge/Django_Packages-nai--security-8c3c26)](https://djangopackages.org/packages/p/nai-security/)
+
 Django security package for IP blocking, country blocking, email blocking, rate limiting, and login tracking.
 
 ## Features
@@ -178,7 +181,7 @@ CELERY_BEAT_SCHEDULE = {
 ## Testing
 
 ```bash
-DJANGO_SETTINGS_MODULE=tests.settings python3 -m pytest tests/ -v
+python -m pytest
 ```
 
 ## License

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "nai-security"
-version = "1.8.0"
+version = "1.8.1"
 description = "Django security app - IP/email/country blocking, rate limiting, login tracking, auto-blocking"
 readme = "README.md"
 license = {text = "MIT"}
