@@ -50,13 +50,17 @@ INSTALLED_APPS = [
 
 ### 2. Add Middleware
 
+> **Important:** `nai_security.middleware.SecurityMiddleware` **must** be placed **after** `django.contrib.auth.middleware.AuthenticationMiddleware`. The package validates this at startup and raises `ImproperlyConfigured` if misordered.
+
 ```python
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    ...
-    "nai_security.middleware.SecurityMiddleware",
-    ...
-    "nai_security.middleware.RateLimitLoggingMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",  # must be before
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "nai_security.middleware.SecurityMiddleware",               # after auth
+    "nai_security.middleware.RateLimitLoggingMiddleware",       # optional
 ]
 ```
 
@@ -64,6 +68,9 @@ MIDDLEWARE = [
 
 ```python
 GEOIP_PATH = "/path/to/GeoLite2-Country.mmdb"
+
+# Optional: override default exempt paths (default: /health/, /ready/, /favicon.ico)
+NAI_SECURITY_EXEMPT_PATHS = ["/health/", "/health", "/ready/", "/ready", "/favicon.ico"]
 ```
 
 ### 4. Run Migrations
@@ -172,11 +179,32 @@ CELERY_BEAT_SCHEDULE = {
 | `BlockedDomain` | Blocked email domains |
 | `BlockedUserAgent` | Blocked user agents |
 | `WhitelistedIP` | IPs that bypass all checks |
-| `WhitelistedUser` | Users exempted from security checks |
+| `WhitelistedUser` | Users exempted from security checks (see exemption types below) |
 | `RateLimitRule` | Custom rate limit rules |
 | `LoginHistory` | User login tracking |
 | `SecurityLog` | Security event logs |
 | `SecuritySettings` | Global settings (singleton) |
+
+## User Exemptions (WhitelistedUser)
+
+Exempt specific users from security checks via the admin panel or ORM:
+
+| Exemption Type | Bypasses |
+|---------------|----------|
+| `all` | Entire security middleware — IP, country, user-agent |
+| `ip_block` | IP blocking only |
+| `geo_block` | Country/geo blocking only |
+| `rate_limit` | Rate limit logging only |
+
+Exemptions support optional expiration (`expires_at`) and can be toggled via `is_active`.
+
+## Upgrading to 1.9.1
+
+**Breaking changes:**
+
+- `SecurityMiddleware` now **requires** `AuthenticationMiddleware` to be placed before it in `MIDDLEWARE`. If misordered, the app raises `ImproperlyConfigured` at startup. Previously the middleware silently failed to resolve users.
+- `NAI_SECURITY_USER_RESOLVER` setting has been **removed**. User resolution now uses `request.user` directly (guaranteed by middleware ordering).
+- `parse_user_agent` now correctly detects Android, iOS, and Opera (previously misidentified as Linux, macOS, and Chrome respectively).
 
 ## Testing
 

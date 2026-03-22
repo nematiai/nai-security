@@ -94,29 +94,29 @@ def parse_user_agent(user_agent: str) -> dict:
     else:
         result['device_type'] = 'desktop'
     
-    # Browser
-    if 'chrome' in ua_lower and 'edg' not in ua_lower:
-        result['browser'] = 'Chrome'
-    elif 'firefox' in ua_lower:
-        result['browser'] = 'Firefox'
-    elif 'safari' in ua_lower and 'chrome' not in ua_lower:
-        result['browser'] = 'Safari'
-    elif 'edg' in ua_lower:
+    # Browser (order matters — specific before generic)
+    if 'edg' in ua_lower:
         result['browser'] = 'Edge'
     elif 'opera' in ua_lower or 'opr' in ua_lower:
         result['browser'] = 'Opera'
-    
-    # OS
-    if 'windows' in ua_lower:
+    elif 'chrome' in ua_lower:
+        result['browser'] = 'Chrome'
+    elif 'firefox' in ua_lower:
+        result['browser'] = 'Firefox'
+    elif 'safari' in ua_lower:
+        result['browser'] = 'Safari'
+
+    # OS (order matters — specific before generic)
+    if 'iphone' in ua_lower or 'ipad' in ua_lower:
+        result['os'] = 'iOS'
+    elif 'android' in ua_lower:
+        result['os'] = 'Android'
+    elif 'windows' in ua_lower:
         result['os'] = 'Windows'
     elif 'mac os' in ua_lower or 'macos' in ua_lower:
         result['os'] = 'macOS'
     elif 'linux' in ua_lower:
         result['os'] = 'Linux'
-    elif 'android' in ua_lower:
-        result['os'] = 'Android'
-    elif 'iphone' in ua_lower or 'ipad' in ua_lower:
-        result['os'] = 'iOS'
     
     return result
 
