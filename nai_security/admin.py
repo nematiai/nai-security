@@ -20,7 +20,11 @@ from .models import (
 
 try:
     from axes.models import AccessAttempt, AccessLog, AccessFailureLog
-    admin.site.unregister(AccessAttempt)
+    from axes.utils import reset as axes_reset
+    try:
+        admin.site.unregister(AccessAttempt)
+    except admin.sites.NotRegistered:
+        pass
     try:
         admin.site.unregister(AccessLog)
     except admin.sites.NotRegistered:
@@ -30,8 +34,57 @@ try:
     except admin.sites.NotRegistered:
         pass
     AXES_INSTALLED = True
-except (ImportError, admin.sites.NotRegistered):
+except ImportError:
     AXES_INSTALLED = False
+    axes_reset = None
+
+
+if AXES_INSTALLED:
+    @admin.register(AccessAttempt)
+    class AccessAttemptAdmin(ModelAdmin):
+        """
+        Re-registers axes' AccessAttempt with an Unlock action that calls
+        axes.utils.reset() — the official API to clear lockout state
+        (deletes AccessAttempt rows AND clears axes' cache).
+        """
+        list_display = [
+            "username", "ip_address", "user_agent_short",
+            "failures_since_start", "attempt_time",
+        ]
+        list_filter = ["attempt_time"]
+        search_fields = ["username", "ip_address", "user_agent"]
+        readonly_fields = [
+            "username", "ip_address", "user_agent", "get_data", "post_data",
+            "http_accept", "path_info", "failures_since_start", "attempt_time",
+        ]
+        ordering = ["-attempt_time"]
+        actions = ["unlock_selected"]
+
+        def user_agent_short(self, obj):
+            ua = obj.user_agent or ""
+            return ua[:60] + "..." if len(ua) > 60 else ua
+        user_agent_short.short_description = "User Agent"
+
+        def unlock_selected(self, request, queryset):
+            total = 0
+            seen = set()
+            for attempt in queryset:
+                key = (attempt.username, attempt.ip_address)
+                if key in seen:
+                    continue
+                seen.add(key)
+                try:
+                    total += axes_reset(username=attempt.username, ip=attempt.ip_address) or 0
+                except Exception:
+                    continue
+            self.message_user(
+                request,
+                f"Unlock complete — {total} AccessAttempt row(s) reset for {len(seen)} user/IP pair(s).",
+            )
+        unlock_selected.short_description = "Unlock selected (reset axes lockout)"
+
+        def has_add_permission(self, request):
+            return False
 
 
 if resources is not None:
