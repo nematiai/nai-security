@@ -1,3 +1,4 @@
+from django.core.cache import cache
 from django.db import models
 
 
@@ -56,6 +57,12 @@ class AllowedCountry(models.Model):
         if not self.name:
             self.name = dict(self.COUNTRY_CHOICES).get(self.code, self.code)
         super().save(*args, **kwargs)
+        cache.delete(f"sec_allowed_country:{self.code}")
+
+    def delete(self, *args, **kwargs):
+        code = self.code
+        super().delete(*args, **kwargs)
+        cache.delete(f"sec_allowed_country:{code}")
 
     def __str__(self):
         return f"{self.name} ({self.code})"

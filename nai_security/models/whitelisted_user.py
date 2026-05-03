@@ -1,3 +1,4 @@
+from django.core.cache import cache
 from django.db import models
 from django.conf import settings
 
@@ -8,6 +9,7 @@ class WhitelistedUser(models.Model):
     EXEMPTION_CHOICES = [
         ('rate_limit', 'Rate Limiting Only'),
         ('ip_block', 'IP Blocking Only'),
+        ('geo_block', 'Country/Geo Blocking Only'),
         ('all', 'All Security Checks'),
     ]
 
@@ -44,6 +46,34 @@ class WhitelistedUser(models.Model):
         blank=True,
         help_text="Optional expiration date for temporary exemptions"
     )
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        cache.delete(f"sec_user_exempt:{self.user_id}")
+        if self.is_active and self.exemption_type == 'all':
+            self._reset_axes_lockout()
+
+    def delete(self, *args, **kwargs):
+        user_id = self.user_id
+        super().delete(*args, **kwargs)
+        cache.delete(f"sec_user_exempt:{user_id}")
+
+    def _reset_axes_lockout(self):
+        """
+        Clear any active axes lockout for this user. Called on save() when the
+        exemption is 'all' so adding a user to whitelist immediately unlocks
+        them — not just permits future logins.
+        """
+        try:
+            from axes.utils import reset
+        except ImportError:
+            return
+        try:
+            username = self.user.get_username()
+            if username:
+                reset(username=username)
+        except Exception:
+            pass
 
     class Meta:
         db_table = 'security_whitelisted_user'

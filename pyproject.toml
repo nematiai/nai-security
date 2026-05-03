@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "nai-security"
-version = "1.8.0"
+version = "1.10.0"
 description = "Django security app - IP/email/country blocking, rate limiting, login tracking, auto-blocking"
 readme = "README.md"
 license = {text = "MIT"}
@@ -46,12 +46,12 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-axes = ["django-axes>=8.3,<9.0"]
+axes = ["django-axes>=8.3.1,<9.0"]
 ratelimit = ["django-ratelimit>=4.0"]
 import-export = ["django-import-export>=3.0"]
 unfold = ["django-unfold>=0.10"]
 all = [
-    "django-axes>=8.3,<9.0",
+    "django-axes>=8.3.1,<9.0",
     "django-ratelimit>=4.0",
     "django-import-export>=3.0",
     "django-unfold>=0.10",

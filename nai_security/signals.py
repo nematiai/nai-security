@@ -42,7 +42,7 @@ def log_successful_login(sender, request, user, **kwargs):
         
         # Check for too many countries in a day
         if settings.max_countries_per_day > 0:
-            today = timezone.now().date()
+            today = timezone.localdate()
             today_countries = LoginHistory.objects.filter(
                 user=user,
                 created_at__date=today

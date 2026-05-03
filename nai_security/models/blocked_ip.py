@@ -1,3 +1,4 @@
+from django.core.cache import cache
 from django.db import models
 from django.utils import timezone
 
@@ -39,6 +40,15 @@ class BlockedIP(models.Model):
             models.Index(fields=['ip_address', 'is_active']),
             models.Index(fields=['-created_at']),
         ]
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        cache.delete(f"sec_blocked_ip:{self.ip_address}")
+
+    def delete(self, *args, **kwargs):
+        ip = self.ip_address
+        super().delete(*args, **kwargs)
+        cache.delete(f"sec_blocked_ip:{ip}")
 
     def is_expired(self):
         if self.expires_at is None:

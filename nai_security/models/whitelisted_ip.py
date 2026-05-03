@@ -1,9 +1,10 @@
+from django.core.cache import cache
 from django.db import models
 
 
 class WhitelistedIP(models.Model):
     """IP addresses that bypass all security checks."""
-    
+
     ip_address = models.GenericIPAddressField(
         unique=True,
         db_index=True,
@@ -27,6 +28,15 @@ class WhitelistedIP(models.Model):
 
     def __str__(self):
         return f"{self.ip_address} - {self.description or 'No description'}"
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        cache.delete(f"sec_whitelist:{self.ip_address}")
+
+    def delete(self, *args, **kwargs):
+        ip = self.ip_address
+        super().delete(*args, **kwargs)
+        cache.delete(f"sec_whitelist:{ip}")
 
     @classmethod
     def is_whitelisted(cls, ip_address: str) -> bool:
