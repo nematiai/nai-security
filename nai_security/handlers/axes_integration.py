@@ -91,48 +91,93 @@ class DynamicAxesHandler(AxesDatabaseHandler):
         except Exception:
             return None
 
-    def _is_user_whitelisted(self, request: Optional[HttpRequest], credentials: Optional[dict]) -> bool:
+    def _lookup_user(self, username: str):
         """
-        Check if the login attempt belongs to a whitelisted user.
-        Resolves username from either credentials dict or request body — fixes the
-        bug where DRF API logins (credentials=None) bypassed the whitelist check.
+        Tolerant user lookup. Tries USERNAME_FIELD first, then falls back to
+        email__iexact when USERNAME_FIELD != 'email' — covers the common case
+        where the login form posts an email but USERNAME_FIELD is 'username'.
         """
+        try:
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            user = User.objects.filter(**{User.USERNAME_FIELD: username}).first()
+            if user is not None:
+                return user
+            if User.USERNAME_FIELD != 'email':
+                field_names = {f.name for f in User._meta.get_fields()}
+                if 'email' in field_names:
+                    return User.objects.filter(email__iexact=username).first()
+            return None
+        except Exception:
+            logger.exception("User lookup failed for username=%s", username)
+            return None
+
+    def _is_user_active_whitelisted(self, user) -> bool:
+        """
+        Any active (non-expired) WhitelistedUser row exempts the user from axes
+        lockout — exemption_type is intentionally ignored here. The user-facing
+        granularity (ip_block / rate_limit / geo_block) applies to the
+        SecurityMiddleware path; for axes lockout the rule is binary.
+        """
+        try:
+            from nai_security.models import WhitelistedUser
+            from django.utils import timezone
+            wl = WhitelistedUser.objects.filter(user=user, is_active=True).first()
+            if wl is None:
+                return False
+            if wl.expires_at and wl.expires_at < timezone.now():
+                return False
+            return True
+        except Exception:
+            logger.exception("Whitelist row check failed for user_id=%s", getattr(user, 'pk', None))
+            return False
+
+    def _is_request_whitelisted(self, request: Optional[HttpRequest], credentials: Optional[dict]) -> bool:
+        """
+        Unified bypass: True if the request matches ANY whitelist source —
+        WhitelistedIP for the client IP, or an active WhitelistedUser for the
+        resolved login user. The IP check runs first so requests with no
+        credentials (e.g., GET /login/, CSRF fetches) still bypass when the
+        source IP is whitelisted.
+        """
+        if request is not None:
+            try:
+                from nai_security.utils import get_client_ip
+                from nai_security.models import WhitelistedIP
+                ip = get_client_ip(request)
+                if ip and WhitelistedIP.is_whitelisted(ip):
+                    return True
+            except Exception:
+                logger.exception("IP whitelist check failed")
+
         username = self._resolve_username(request, credentials)
         if not username:
             return False
-        try:
-            from django.contrib.auth import get_user_model
-            from nai_security.models import WhitelistedUser
-
-            User = get_user_model()
-            user = User.objects.filter(**{User.USERNAME_FIELD: username}).first()
-            if user is None:
-                return False
-            return WhitelistedUser.is_whitelisted(user, check_type='all')
-        except Exception:
-            logger.exception("Whitelist check failed for username=%s", username)
+        user = self._lookup_user(username)
+        if user is None:
             return False
+        return self._is_user_active_whitelisted(user)
 
     def is_allowed(self, request: HttpRequest, credentials: Optional[dict] = None) -> bool:
-        """Whitelisted users are always allowed — short-circuits all axes checks."""
-        if self._is_user_whitelisted(request, credentials):
+        """Whitelisted IPs and users are always allowed — short-circuits axes checks."""
+        if self._is_request_whitelisted(request, credentials):
             return True
         return super().is_allowed(request, credentials)
 
     def is_locked(self, request: HttpRequest, credentials: Optional[dict] = None) -> bool:
         """
-        Skip lockout check entirely for whitelisted users.
+        Skip lockout for any whitelisted request.
         axes 8.x renamed `is_already_locked` -> `is_locked` (called from is_allowed
         and from axes.helpers.get_lockout_response).
         """
-        if self._is_user_whitelisted(request, credentials):
-            logger.debug("Axes lockout check skipped — whitelisted user")
+        if self._is_request_whitelisted(request, credentials):
+            logger.debug("Axes lockout check skipped — whitelisted request")
             return False
         return super().is_locked(request, credentials)
 
     def user_login_failed(self, sender, credentials, request, **kwargs):
-        """Skip recording failures for whitelisted users — keeps AccessAttempt table clean."""
-        if self._is_user_whitelisted(request, credentials):
-            logger.debug("Axes failure recording skipped — whitelisted user")
+        """Skip recording failures for whitelisted requests — keeps AccessAttempt clean."""
+        if self._is_request_whitelisted(request, credentials):
+            logger.debug("Axes failure recording skipped — whitelisted request")
             return
         super().user_login_failed(sender, credentials, request, **kwargs)
