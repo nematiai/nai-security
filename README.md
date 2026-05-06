@@ -131,6 +131,16 @@ All changes take effect immediately — no server restart required.
 
 > **Validation:** Enabling attempt expiry with cooloff set to 0 will raise a validation error in the admin panel.
 
+### Whitelist bypass
+
+`DynamicAxesHandler` short-circuits all axes checks (`is_allowed`, `is_locked`, `user_login_failed`) when the request matches **any** active whitelist:
+
+- The client IP (`HTTP_X_FORWARDED_FOR` or `REMOTE_ADDR`) appears in `WhitelistedIP` — bypass works even when the request has no credentials (e.g. `GET /login/`).
+- The login username/email resolves to a user with an active `WhitelistedUser` row — **regardless of `exemption_type`**. The `exemption_type` field still controls middleware-level bypasses (IP, country, rate-limit); for axes lockout the rule is binary.
+- Username lookup tolerates `USERNAME_FIELD='username'` deployments where the login form posts an email — falls back to `email__iexact` automatically.
+
+When a whitelisted request fails authentication, no `AccessAttempt` row is recorded — the table stays clean for whitelisted admins.
+
 ## Management Commands
 
 ```bash
@@ -197,6 +207,19 @@ Exempt specific users from security checks via the admin panel or ORM:
 | `rate_limit` | Rate limit logging only |
 
 Exemptions support optional expiration (`expires_at`) and can be toggled via `is_active`.
+
+> **Axes lockout note:** any active `WhitelistedUser` row exempts the user from django-axes lockout, regardless of `exemption_type`. The `exemption_type` field controls only the `SecurityMiddleware` checks (IP/country/rate-limit). See [Axes Integration → Whitelist bypass](#whitelist-bypass).
+
+## Upgrading to 1.10.1
+
+**Bug fixes (no breaking changes):**
+
+- **Whitelisted users were still being locked out by django-axes.** Three independent paths caused this:
+  1. `WhitelistedIP` was not consulted by the axes handler — whitelisted IPs could still be locked, especially with `AXES_LOCKOUT_PARAMETERS=['ip_address']`.
+  2. The handler's whitelist check was hard-coded to `exemption_type='all'` — users with `'ip_block'`, `'rate_limit'`, or `'geo_block'` were still locked.
+  3. User lookup used `USERNAME_FIELD` only and silently failed when the login form posts an email but `USERNAME_FIELD='username'`.
+- All three are fixed in `nai_security.handlers.axes_integration.DynamicAxesHandler` via a unified `_is_request_whitelisted()` helper. Failed login attempts from whitelisted requests are no longer recorded in `AccessAttempt`.
+- Verified end-to-end with 100x failed-login smoke test (`scripts/smoke_100x_lockout.py`) and 9 regression tests in `tests/test_axes_integration.py`.
 
 ## Upgrading to 1.9.1
 
