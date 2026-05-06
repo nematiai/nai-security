@@ -5,6 +5,8 @@ from django.core.cache import cache
 from django.test import TestCase, RequestFactory
 from django.conf import settings as django_settings
 
+from axes.handlers.database import AxesDatabaseHandler
+
 from nai_security.models import SecuritySettings
 from nai_security.handlers.axes_integration import (
     DynamicAxesHandler,
@@ -262,4 +264,204 @@ class WhitelistAutoResetTest(TestCase):
         self.assertEqual(
             AccessAttempt.objects.filter(username='bob').count(), 1,
             "Inactive whitelist must NOT reset axes state",
+        )
+
+
+class UnifiedWhitelistBypassTest(TestCase):
+    """
+    Regression tests for B1/B2/B3 from docs/audits/2026-05-06-nai-security-whitelist-audit.md:
+    - B1: WhitelistedIP must bypass axes even with no/unknown credentials.
+    - B2: WhitelistedUser must bypass axes regardless of exemption_type.
+    - B3: User lookup must fall back to email when USERNAME_FIELD differs.
+    """
+
+    def setUp(self):
+        from django.contrib.auth import get_user_model
+        from axes.models import AccessAttempt
+        from nai_security.models import WhitelistedUser, WhitelistedIP
+
+        cache.clear()
+        AccessAttempt.objects.all().delete()
+        WhitelistedUser.objects.all().delete()
+        WhitelistedIP.objects.all().delete()
+
+        User = get_user_model()
+        self.user = User.objects.create_user(
+            username='admin1', email='x@gmail.com', password='pw',
+        )
+        self.factory = RequestFactory()
+        self.handler = DynamicAxesHandler()
+
+    def _request(self, body=None, remote_addr='203.0.113.10'):
+        request = self.factory.post('/login/', body or {})
+        request.META['REMOTE_ADDR'] = remote_addr
+        request.axes_ip_address = remote_addr
+        request.axes_user_agent = 'test'
+        return request
+
+    # ---- B1: IP whitelist bypasses axes lockout ----
+
+    def test_whitelisted_ip_not_locked_when_credentials_missing(self):
+        """B1: GET /login/ with no credentials from a whitelisted IP must not be locked."""
+        from nai_security.models import WhitelistedIP
+        WhitelistedIP.objects.create(ip_address='203.0.113.10', is_active=True)
+
+        with patch.object(AxesDatabaseHandler, 'is_locked', return_value=True):
+            result = self.handler.is_locked(self._request(), credentials=None)
+        self.assertFalse(result, "Whitelisted IP must bypass axes when credentials are absent")
+
+    def test_whitelisted_ip_not_locked_when_username_unknown(self):
+        """B1: failed login from whitelisted IP with a non-existent username must not be locked."""
+        from nai_security.models import WhitelistedIP
+        WhitelistedIP.objects.create(ip_address='203.0.113.10', is_active=True)
+
+        with patch.object(AxesDatabaseHandler, 'is_locked', return_value=True):
+            result = self.handler.is_locked(
+                self._request({'username': 'nobody'}),
+                credentials={'username': 'nobody'},
+            )
+        self.assertFalse(result, "Whitelisted IP must bypass axes for unknown users too")
+
+    # ---- B2: any exemption_type bypasses axes ----
+
+    def test_whitelisted_user_with_ip_block_exemption_not_locked_by_axes(self):
+        """B2: exemption_type='ip_block' must still bypass axes lockout."""
+        from nai_security.models import WhitelistedUser
+        WhitelistedUser.objects.create(user=self.user, exemption_type='ip_block', is_active=True)
+
+        with patch.object(AxesDatabaseHandler, 'is_locked', return_value=True):
+            result = self.handler.is_locked(
+                self._request({'username': 'admin1'}),
+                credentials={'username': 'admin1'},
+            )
+        self.assertFalse(result, "exemption_type='ip_block' must bypass axes lockout")
+
+    def test_whitelisted_user_with_rate_limit_exemption_not_locked_by_axes(self):
+        """B2: exemption_type='rate_limit' must still bypass axes lockout."""
+        from nai_security.models import WhitelistedUser
+        WhitelistedUser.objects.create(user=self.user, exemption_type='rate_limit', is_active=True)
+
+        with patch.object(AxesDatabaseHandler, 'is_locked', return_value=True):
+            result = self.handler.is_locked(
+                self._request({'username': 'admin1'}),
+                credentials={'username': 'admin1'},
+            )
+        self.assertFalse(result, "exemption_type='rate_limit' must bypass axes lockout")
+
+    # ---- B3: email fallback when USERNAME_FIELD='username' but form posts email ----
+
+    def test_whitelist_resolves_user_by_email_fallback(self):
+        """B3: form posts email='x@gmail.com' but USERNAME_FIELD='username' — must still match."""
+        from nai_security.models import WhitelistedUser
+        WhitelistedUser.objects.create(user=self.user, exemption_type='all', is_active=True)
+
+        with patch.object(AxesDatabaseHandler, 'is_locked', return_value=True):
+            result = self.handler.is_locked(
+                self._request({'username': 'x@gmail.com'}),
+                credentials={'username': 'x@gmail.com'},
+            )
+        self.assertFalse(
+            result,
+            "Whitelist lookup must fall back to email when login uses email-as-username",
+        )
+
+
+from django.test import override_settings
+
+
+@override_settings(
+    AXES_LOCKOUT_PARAMETERS=['ip_address'],
+    AXES_FAILURE_LIMIT=5,
+    AXES_COOLOFF_TIME=None,
+)
+class RealLockoutBypassTest(TestCase):
+    """
+    End-to-end smoke test: uses REAL AccessAttempt rows + REAL axes lockout calculation
+    (no mocking of super().is_locked). Proves the override flips a genuine lockout
+    decision, not just a stubbed one.
+
+    Configured with AXES_LOCKOUT_PARAMETERS=['ip_address'] so a single high-failure
+    row at our test IP is sufficient to trigger axes' real lockout logic.
+    """
+
+    def setUp(self):
+        from django.contrib.auth import get_user_model
+        from axes.models import AccessAttempt
+        from nai_security.models import WhitelistedUser, WhitelistedIP
+
+        cache.clear()
+        AccessAttempt.objects.all().delete()
+        WhitelistedUser.objects.all().delete()
+        WhitelistedIP.objects.all().delete()
+
+        User = get_user_model()
+        self.user = User.objects.create_user(
+            username='admin1', email='x@gmail.com', password='pw',
+        )
+        self.factory = RequestFactory()
+        self.handler = DynamicAxesHandler()
+
+        # Real lockout state at IP 203.0.113.10
+        AccessAttempt.objects.create(
+            username='x@gmail.com',
+            ip_address='203.0.113.10',
+            user_agent='smoke',
+            failures_since_start=10,
+        )
+
+    def _req(self, body=None, ip='203.0.113.10'):
+        r = self.factory.post('/login/', body or {})
+        r.META['REMOTE_ADDR'] = ip
+        r.axes_ip_address = ip
+        r.axes_user_agent = 'smoke'
+        return r
+
+    def test_negative_control_no_whitelist_is_actually_locked(self):
+        """Sanity: without a whitelist, axes' real logic must report the IP as locked.
+        Proves the test setup actually triggers lockout — otherwise the positive
+        cases below could be passing for the wrong reason."""
+        result = self.handler.is_locked(
+            self._req({'username': 'x@gmail.com'}),
+            credentials={'username': 'x@gmail.com'},
+        )
+        self.assertTrue(
+            result,
+            "Without whitelist, axes must report locked — if this fails the test "
+            "setup is wrong and the positive cases prove nothing.",
+        )
+
+    def test_real_lockout_bypassed_by_ip_whitelist(self):
+        """B1 end-to-end: WhitelistedIP must flip a real axes lockout decision."""
+        from nai_security.models import WhitelistedIP
+        WhitelistedIP.objects.create(ip_address='203.0.113.10', is_active=True)
+
+        result = self.handler.is_locked(self._req(), credentials=None)
+        self.assertFalse(result, "WhitelistedIP must override real axes lockout")
+
+    def test_real_lockout_bypassed_by_user_whitelist_ip_block_exemption(self):
+        """B2 end-to-end: exemption_type='ip_block' must flip a real axes lockout decision."""
+        from nai_security.models import WhitelistedUser
+        WhitelistedUser.objects.create(
+            user=self.user, exemption_type='ip_block', is_active=True,
+        )
+        result = self.handler.is_locked(
+            self._req({'username': 'x@gmail.com'}),
+            credentials={'username': 'x@gmail.com'},
+        )
+        self.assertFalse(
+            result, "exemption_type='ip_block' must override real axes lockout",
+        )
+
+    def test_real_lockout_bypassed_by_email_login_whitelist(self):
+        """B3 end-to-end: email-as-login resolves to whitelisted user, real axes lockout flipped."""
+        from nai_security.models import WhitelistedUser
+        WhitelistedUser.objects.create(
+            user=self.user, exemption_type='all', is_active=True,
+        )
+        result = self.handler.is_locked(
+            self._req({'username': 'x@gmail.com'}),
+            credentials={'username': 'x@gmail.com'},
+        )
+        self.assertFalse(
+            result, "Email-resolved whitelist must override real axes lockout",
         )
