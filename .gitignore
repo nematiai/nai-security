@@ -7,6 +7,7 @@ build/
 .eggs/
 *.so
 .Python
+.env
 env/
 venv/
 .venv/
@@ -16,5 +17,6 @@ venv/
 .vscode/
 *.sqlite3
 .claude
+.wiki-tmp/
 
 CLAUDE.md
