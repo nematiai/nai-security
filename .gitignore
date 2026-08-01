@@ -17,5 +17,6 @@ venv/
 .vscode/
 *.sqlite3
 .claude
+.wiki-tmp/
 
 CLAUDE.md
