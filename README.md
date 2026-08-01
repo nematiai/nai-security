@@ -89,14 +89,15 @@ python manage.py download_geoip
 
 **Required:**
 - Django >= 4.2
-- geoip2 >= 4.0
-- redis >= 4.0
+- geoip2 >= 5.0, < 6
+- redis >= 5.0, < 9
+- requests >= 2.28
 
 **Optional:**
-- `django-axes >= 8.3` — login attempt tracking and lockout; without it axes features are silently disabled
-- `django-ratelimit >= 4.0` — rate limiting per endpoint
-- `django-import-export >= 3.0` — admin import/export for blocked emails/domains; without it those buttons are hidden
-- `django-unfold >= 0.10` — admin UI theme; without it falls back to standard Django admin
+- `django-axes >= 8.3.1, < 9` — login attempt tracking and lockout; without it axes features are silently disabled
+- `django-ratelimit >= 4.1` — rate limiting per endpoint
+- `django-import-export >= 4.0, < 5` — admin import/export for blocked emails/domains; without it those buttons are hidden
+- `django-unfold >= 0.90` — admin UI theme; without it falls back to standard Django admin (0.100+ needs Python >= 3.12)
 - `celery` — background tasks (auto-block processing, sync, reports); without it tasks are no-ops
 
 ## Axes Integration
@@ -209,6 +210,16 @@ Exempt specific users from security checks via the admin panel or ORM:
 Exemptions support optional expiration (`expires_at`) and can be toggled via `is_active`.
 
 > **Axes lockout note:** any active `WhitelistedUser` row exempts the user from django-axes lockout, regardless of `exemption_type`. The `exemption_type` field controls only the `SecurityMiddleware` checks (IP/country/rate-limit). See [Axes Integration → Whitelist bypass](#whitelist-bypass).
+
+## Upgrading to 1.11.0
+
+**Dependency pin updates (install-time):**
+
+- Declared `requests>=2.28` as a required dependency (used by sync services).
+- Raised/capped floors: `geoip2>=5.0,<6`, `redis>=5.0,<9`.
+- Optional extras: `django-import-export>=4.0,<5`, `django-unfold>=0.90`, `django-ratelimit>=4.1`.
+- `django-axes` remains `>=8.3.1,<9.0`.
+- No application API changes in this release.
 
 ## Upgrading to 1.10.1
 
