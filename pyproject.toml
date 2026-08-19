@@ -65,10 +65,11 @@ dev = [
     "black>=25.0",
     "ruff>=0.9",
 ]
+docs = ["mkdocs-material>=9.6"]
 
 [project.urls]
 Homepage = "https://github.com/nematiai/nai-security"
-Documentation = "https://github.com/nematiai/nai-security#readme"
+Documentation = "https://nematiai.github.io/nai-security/"
 Repository = "https://github.com/nematiai/nai-security"
 Issues = "https://github.com/nematiai/nai-security/issues"
 

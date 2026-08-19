@@ -8,11 +8,12 @@
 #   make publish   API check, then upload current version to PyPI
 #   make version   Show current version
 #   make wiki      Publish wiki/*.md to GitHub Wiki
+#   make docs      Build GitHub Pages site locally (MkDocs)
 
 PYTHON ?= .venv/bin/python
 PYTEST ?= .venv/bin/pytest
 
-.PHONY: help check release test build publish version bump wiki ensure-venv
+.PHONY: help check release test build publish version bump wiki docs docs-serve ensure-venv
 
 help:
 	@echo "Targets:"
@@ -23,6 +24,7 @@ help:
 	@echo "  make build     Build sdist/wheel and run twine check"
 	@echo "  make publish   Verify API token, then upload current version to PyPI"
 	@echo "  make wiki      Publish wiki/*.md pages to GitHub Wiki"
+	@echo "  make docs      Prepare wiki + build MkDocs site/ locally"
 	@echo "  make version   Print current version"
 
 ensure-venv:
@@ -58,3 +60,11 @@ release: check
 
 wiki: ensure-venv
 	@$(PYTHON) tools/publish_wiki.py
+
+docs: ensure-venv
+	@$(PYTHON) tools/prepare_docs.py
+	@$(PYTHON) -m mkdocs build --strict
+
+docs-serve: ensure-venv
+	@$(PYTHON) tools/prepare_docs.py
+	@$(PYTHON) -m mkdocs serve

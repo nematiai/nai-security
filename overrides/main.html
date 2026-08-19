@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block extrahead %}
+{{ super() }}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareSourceCode",
+  "name": "nai-security",
+  "description": "{{ config.site_description }}",
+  "url": "{{ config.site_url }}",
+  "codeRepository": "{{ config.repo_url }}",
+  "programmingLanguage": "Python",
+  "runtimePlatform": "Django",
+  "license": "https://opensource.org/licenses/MIT",
+  "author": {
+    "@type": "Organization",
+    "name": "NEMATI AI",
+    "url": "https://nemati.ai"
+  }
+}
+</script>
+{% endblock %}

@@ -2,6 +2,7 @@
 
 Django security package for IP / country / email / domain / user-agent blocking, rate-limit logging, login tracking, and django-axes lockout control.
 
+**Docs:** https://nematiai.github.io/nai-security/  
 **PyPI:** https://pypi.org/project/nai-security/  
 **Current release:** `1.12.0`  
 **Repo:** https://github.com/nematiai/nai-security

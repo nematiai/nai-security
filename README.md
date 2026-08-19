@@ -5,7 +5,8 @@
 
 Django security package for IP blocking, country blocking, email blocking, rate limiting, and login tracking.
 
-**User guide (Wiki):** https://github.com/nematiai/nai-security/wiki  
+**Docs:** https://nematiai.github.io/nai-security/  
+**Wiki:** https://github.com/nematiai/nai-security/wiki  
 **Wiki source in repo:** [`wiki/`](./wiki/)
 
 ## Features
