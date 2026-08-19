@@ -7,7 +7,8 @@ Django security package for IP blocking, country blocking, email blocking, rate 
 
 **Docs:** https://nematiai.github.io/nai-security/  
 **Wiki:** https://github.com/nematiai/nai-security/wiki  
-**Wiki source in repo:** [`wiki/`](./wiki/)
+**Wiki source in repo:** [`wiki/`](https://github.com/nematiai/nai-security/tree/main/wiki)  
+**NEMATI AI:** https://nemati.ai
 
 ## Features
 
@@ -218,6 +219,10 @@ Exempt specific users from security checks via the admin panel or ORM:
 Exemptions support optional expiration (`expires_at`) and can be toggled via `is_active`.
 
 > **Axes lockout note:** any active `WhitelistedUser` row exempts the user from django-axes lockout, regardless of `exemption_type`. The `exemption_type` field controls only the `SecurityMiddleware` checks (IP/country/rate-limit). See [Axes Integration → Whitelist bypass](#whitelist-bypass).
+
+## Upgrading to 1.12.2
+
+Metadata only: NEMATI AI links (https://nemati.ai) on PyPI, docs, and wiki. No app API change.
 
 ## Upgrading to 1.12.1
 
