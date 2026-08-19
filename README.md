@@ -12,10 +12,10 @@ Django security package for IP blocking, country blocking, email blocking, rate 
 
 - **IP Blocking** - Block specific IPs manually or automatically
 - **Country Blocking** - Block/allow countries using GeoIP
-- **Email Blocking** - Block disposable emails and specific addresses
-- **Domain Blocking** - Block email domains (disposable, spam, etc.)
+- **Email Blocking** - Helpers + admin lists for signup/login in your app (not request middleware)
+- **Domain Blocking** - Helpers + admin lists for disposable/spam domains
 - **User Agent Blocking** - Block bots, scrapers, attack tools
-- **Rate Limiting** - Custom rate limit rules per endpoint
+- **Rate Limiting** - Logs django-ratelimit hits; `RateLimitRule` is storage only (not an engine)
 - **Login History** - Track user logins with anomaly detection
 - **Auto-Blocking** - Automatically block IPs/countries based on attack patterns
 - **Security Logs** - Comprehensive logging of all security events
@@ -74,6 +74,10 @@ GEOIP_PATH = "/path/to/GeoLite2-Country.mmdb"
 
 # Optional: override default exempt paths (default: /health/, /ready/, /favicon.ico)
 NAI_SECURITY_EXEMPT_PATHS = ["/health/", "/health", "/ready/", "/ready", "/favicon.ico"]
+
+# Required if you sit behind a reverse proxy. Default False: ignore X-Forwarded-For / X-Real-IP
+# so clients cannot spoof their IP.
+NAI_SECURITY_TRUST_PROXY_HEADERS = True
 ```
 
 ### 4. Run Migrations
@@ -139,7 +143,7 @@ All changes take effect immediately — no server restart required.
 
 `DynamicAxesHandler` short-circuits all axes checks (`is_allowed`, `is_locked`, `user_login_failed`) when the request matches **any** active whitelist:
 
-- The client IP (`HTTP_X_FORWARDED_FOR` or `REMOTE_ADDR`) appears in `WhitelistedIP` — bypass works even when the request has no credentials (e.g. `GET /login/`).
+- The client IP (`REMOTE_ADDR`, or `X-Forwarded-For` / `X-Real-IP` when `NAI_SECURITY_TRUST_PROXY_HEADERS=True`) appears in `WhitelistedIP` — bypass works even when the request has no credentials (e.g. `GET /login/`).
 - The login username/email resolves to a user with an active `WhitelistedUser` row — **regardless of `exemption_type`**. The `exemption_type` field still controls middleware-level bypasses (IP, country, rate-limit); for axes lockout the rule is binary.
 - Username lookup tolerates `USERNAME_FIELD='username'` deployments where the login form posts an email — falls back to `email__iexact` automatically.
 
@@ -189,12 +193,12 @@ CELERY_BEAT_SCHEDULE = {
 | `BlockedIP` | Blocked IP addresses |
 | `BlockedCountry` | Blocked countries |
 | `AllowedCountry` | Allowed countries (whitelist mode) |
-| `BlockedEmail` | Blocked email addresses |
-| `BlockedDomain` | Blocked email domains |
+| `BlockedEmail` | Blocked email addresses (helpers for signup/login in **your** app — not request middleware) |
+| `BlockedDomain` | Blocked email domains (helpers for signup/login in **your** app — not request middleware) |
 | `BlockedUserAgent` | Blocked user agents |
 | `WhitelistedIP` | IPs that bypass all checks |
 | `WhitelistedUser` | Users exempted from security checks (see exemption types below) |
-| `RateLimitRule` | Custom rate limit rules |
+| `RateLimitRule` | Storage for custom rate rules — this package does **not** enforce them (use django-ratelimit) |
 | `LoginHistory` | User login tracking |
 | `SecurityLog` | Security event logs |
 | `SecuritySettings` | Global settings (singleton) |
@@ -213,6 +217,16 @@ Exempt specific users from security checks via the admin panel or ORM:
 Exemptions support optional expiration (`expires_at`) and can be toggled via `is_active`.
 
 > **Axes lockout note:** any active `WhitelistedUser` row exempts the user from django-axes lockout, regardless of `exemption_type`. The `exemption_type` field controls only the `SecurityMiddleware` checks (IP/country/rate-limit). See [Axes Integration → Whitelist bypass](#whitelist-bypass).
+
+## Upgrading to 1.12.0
+
+**Security / behavior fix (no migrations):**
+
+- **If you run behind a reverse proxy, set** `NAI_SECURITY_TRUST_PROXY_HEADERS = True`. Forwarded headers are ignored by default so clients cannot spoof IP to bypass blocks.
+- Axes cooloff and attempt-expiry now apply on the next request in every worker (not only the process that saved admin).
+- Whitelisting a user with any `exemption_type` now clears an active axes lockout.
+- Default bad-bot sync no longer blocks `python-requests` / `curl` / `wget` / `Go-http-client`.
+- `GEOIP_PATH` accepts a directory or the `.mmdb` file. Classifiers add Django 6.1 and Python 3.14.
 
 ## Upgrading to 1.11.0
 

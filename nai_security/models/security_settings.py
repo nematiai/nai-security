@@ -127,18 +127,11 @@ class SecuritySettings(models.Model):
         # Ensure only one instance exists (singleton)
         self.pk = 1
         super().save(*args, **kwargs)
-        # Clear cache when settings change
         cache.delete('security_settings')
-        # Propagate axes settings changes at runtime
         try:
-            from datetime import timedelta
-            from django.conf import settings as django_settings
-            django_settings.AXES_USE_ATTEMPT_EXPIRATION = self.axes_attempt_expiry_enabled
-            if self.axes_cooloff_minutes > 0:
-                django_settings.AXES_COOLOFF_TIME = timedelta(minutes=self.axes_cooloff_minutes)
-            else:
-                django_settings.AXES_COOLOFF_TIME = None
-        except Exception:
+            from nai_security.handlers.axes_integration import refresh_axes_from_db
+            refresh_axes_from_db()
+        except ImportError:
             pass
 
     @classmethod

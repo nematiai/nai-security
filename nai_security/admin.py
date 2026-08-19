@@ -19,18 +19,10 @@ from .models import (
 )
 
 try:
-    from axes.models import AccessAttempt, AccessLog, AccessFailureLog
+    from axes.models import AccessAttempt
     from axes.utils import reset as axes_reset
     try:
         admin.site.unregister(AccessAttempt)
-    except admin.sites.NotRegistered:
-        pass
-    try:
-        admin.site.unregister(AccessLog)
-    except admin.sites.NotRegistered:
-        pass
-    try:
-        admin.site.unregister(AccessFailureLog)
     except admin.sites.NotRegistered:
         pass
     AXES_INSTALLED = True

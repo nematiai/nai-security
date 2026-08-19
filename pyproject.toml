@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "nai-security"
-version = "1.11.0"
+version = "1.12.0"
 description = "Django security app - IP/email/country blocking, rate limiting, login tracking, auto-blocking"
 readme = "README.md"
 license = "MIT"
@@ -30,12 +30,14 @@ classifiers = [
     "Framework :: Django :: 5.0",
     "Framework :: Django :: 5.2",
     "Framework :: Django :: 6.0",
+    "Framework :: Django :: 6.1",
     "Intended Audience :: Developers",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Security",
 ]
 dependencies = [

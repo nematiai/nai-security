@@ -53,7 +53,10 @@ MIDDLEWARE = [
 
 ```python
 GEOIP_PATH = "/var/lib/geoip/GeoLite2-Country.mmdb"
+# or a directory containing GeoLite2-Country.mmdb
 ```
+
+`GEOIP_PATH` may be the `.mmdb` file or a directory; a directory is resolved to `GeoLite2-Country.mmdb` inside it.
 
 Download DB:
 

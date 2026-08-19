@@ -1,9 +1,15 @@
 from unittest.mock import patch, MagicMock
+import os
 
 from django.core.cache import cache
-from django.test import TestCase, RequestFactory
+from django.test import TestCase, RequestFactory, override_settings
 
-from nai_security.utils import get_client_ip, get_country_from_ip, parse_user_agent
+from nai_security.utils import (
+    get_client_ip,
+    get_country_from_ip,
+    parse_user_agent,
+    resolve_geoip_db_path,
+)
 
 
 # ------------------------------------------------------------------
@@ -24,6 +30,15 @@ class GetClientIPTest(TestCase):
         request = self._make_request(REMOTE_ADDR='1.2.3.4')
         self.assertEqual(get_client_ip(request), '1.2.3.4')
 
+    def test_ignores_forwarded_headers_by_default(self):
+        request = self._make_request(
+            HTTP_X_FORWARDED_FOR='5.6.7.8',
+            HTTP_X_REAL_IP='3.3.3.3',
+            REMOTE_ADDR='1.2.3.4',
+        )
+        self.assertEqual(get_client_ip(request), '1.2.3.4')
+
+    @override_settings(NAI_SECURITY_TRUST_PROXY_HEADERS=True)
     def test_x_forwarded_for_single(self):
         request = self._make_request(
             HTTP_X_FORWARDED_FOR='5.6.7.8',
@@ -31,6 +46,7 @@ class GetClientIPTest(TestCase):
         )
         self.assertEqual(get_client_ip(request), '5.6.7.8')
 
+    @override_settings(NAI_SECURITY_TRUST_PROXY_HEADERS=True)
     def test_x_forwarded_for_chain(self):
         request = self._make_request(
             HTTP_X_FORWARDED_FOR='5.6.7.8, 10.0.0.1, 10.0.0.2',
@@ -38,12 +54,15 @@ class GetClientIPTest(TestCase):
         )
         self.assertEqual(get_client_ip(request), '5.6.7.8')
 
+    @override_settings(NAI_SECURITY_TRUST_PROXY_HEADERS=True)
     def test_x_forwarded_for_with_spaces(self):
         request = self._make_request(
             HTTP_X_FORWARDED_FOR='  9.9.9.9 , 10.0.0.1',
+            REMOTE_ADDR='127.0.0.1',
         )
         self.assertEqual(get_client_ip(request), '9.9.9.9')
 
+    @override_settings(NAI_SECURITY_TRUST_PROXY_HEADERS=True)
     def test_x_real_ip(self):
         request = self._make_request(
             HTTP_X_REAL_IP='3.3.3.3',
@@ -51,6 +70,7 @@ class GetClientIPTest(TestCase):
         )
         self.assertEqual(get_client_ip(request), '3.3.3.3')
 
+    @override_settings(NAI_SECURITY_TRUST_PROXY_HEADERS=True)
     def test_x_forwarded_for_takes_priority_over_x_real_ip(self):
         request = self._make_request(
             HTTP_X_FORWARDED_FOR='1.1.1.1',
@@ -63,6 +83,27 @@ class GetClientIPTest(TestCase):
         request = self._make_request()
         # RequestFactory sets REMOTE_ADDR to 127.0.0.1 by default
         self.assertEqual(get_client_ip(request), '127.0.0.1')
+
+
+class ResolveGeoipDbPathTest(TestCase):
+
+    def test_none_and_empty(self):
+        self.assertIsNone(resolve_geoip_db_path(None))
+        self.assertIsNone(resolve_geoip_db_path(''))
+
+    def test_file_path_unchanged(self):
+        self.assertEqual(
+            resolve_geoip_db_path('/var/lib/geoip/GeoLite2-Country.mmdb'),
+            '/var/lib/geoip/GeoLite2-Country.mmdb',
+        )
+
+    def test_directory_appends_country_db(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertEqual(
+                resolve_geoip_db_path(tmp),
+                os.path.join(tmp, 'GeoLite2-Country.mmdb'),
+            )
 
 
 # ------------------------------------------------------------------

@@ -1,9 +1,22 @@
 # Upgrading
 
 ```bash
-pip install -U "nai-security==1.11.0"
+pip install -U "nai-security==1.12.0"
 python manage.py migrate
 ```
+
+## 1.12.0
+
+Security and honesty fixes (no model/migration break):
+
+- **Breaking if you are behind a reverse proxy:** `X-Forwarded-For` / `X-Real-IP` are ignored unless you set `NAI_SECURITY_TRUST_PROXY_HEADERS = True`. Default is `False` so clients cannot spoof IP.
+- Axes cooloff/attempt-expiry now re-read from `SecuritySettings` on each lockout check (multi-worker safe).
+- Any active `WhitelistedUser` clears axes lockout on save (not only `exemption_type='all'`).
+- `AccessLog` / `AccessFailureLog` stay in admin (only `AccessAttempt` is customized).
+- Default bot sync no longer includes `python-requests`, `curl/`, `wget/`, `Go-http-client`.
+- `GEOIP_PATH` may be a directory or the `.mmdb` file.
+- Classifiers: Django 6.1, Python 3.14.
+- Docs: email/domain blocking are helpers; `RateLimitRule` is storage only.
 
 ## 1.11.0
 
