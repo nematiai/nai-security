@@ -4,7 +4,7 @@ site_description: Django security package for IP, country, and email blocking, G
 site_author: NEMATI AI
 repo_url: https://github.com/nematiai/nai-security
 repo_name: nematiai/nai-security
-copyright: NEMATI AI · MIT
+copyright: '<a href="https://nemati.ai">NEMATI AI</a> · MIT'
 
 docs_dir: .docs-build
 site_dir: site
@@ -82,3 +82,6 @@ extra:
     - icon: fontawesome/brands/python
       link: https://pypi.org/project/nai-security/
       name: PyPI
+    - icon: fontawesome/solid/globe
+      link: https://nemati.ai
+      name: NEMATI AI
