@@ -76,6 +76,13 @@ class BlockedUserAgentTest(TestCase):
         blocked, _ = BlockedUserAgent.is_user_agent_blocked('')
         self.assertFalse(blocked)
 
+    def test_pattern_cache_invalidates_on_save(self):
+        ua = BlockedUserAgent.objects.create(pattern='AhrefsBot', block_type='contains')
+        self.assertTrue(BlockedUserAgent.is_user_agent_blocked('AhrefsBot/7.0')[0])
+        ua.is_active = False
+        ua.save()
+        self.assertFalse(BlockedUserAgent.is_user_agent_blocked('AhrefsBot/7.0')[0])
+
 
 class BlockedCountryTest(TestCase):
     def test_auto_name(self):
@@ -184,3 +191,11 @@ class LoginHistoryTest(TestCase):
         self.assertTrue(LoginHistory.is_new_ip(self.user, '1.1.1.1'))
         LoginHistory.objects.create(user=self.user, ip_address='1.1.1.1', country_code='US')
         self.assertFalse(LoginHistory.is_new_ip(self.user, '1.1.1.1'))
+
+
+class DefaultBadBotListTest(TestCase):
+    def test_does_not_block_common_http_clients(self):
+        from nai_security.services.sync_services import BadBotSync
+        patterns = {row[0] for row in BadBotSync.DEFAULT_BAD_BOTS}
+        for footgun in ('python-requests', 'curl/', 'wget/', 'Go-http-client'):
+            self.assertNotIn(footgun, patterns)

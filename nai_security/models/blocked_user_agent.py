@@ -1,5 +1,8 @@
+from django.core.cache import cache
 from django.db import models
 import re
+
+UA_PATTERN_CACHE_KEY = "sec_ua_patterns"
 
 
 class BlockedUserAgent(models.Model):
@@ -54,6 +57,14 @@ class BlockedUserAgent(models.Model):
         verbose_name_plural = "Blocked User Agents"
         ordering = ['-block_count', 'pattern']
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        cache.delete(UA_PATTERN_CACHE_KEY)
+
+    def delete(self, *args, **kwargs):
+        super().delete(*args, **kwargs)
+        cache.delete(UA_PATTERN_CACHE_KEY)
+
     def __str__(self):
         return f"{self.pattern[:50]} ({self.get_category_display()})"
 
@@ -81,8 +92,12 @@ class BlockedUserAgent(models.Model):
         """Check if user agent is blocked. Returns (is_blocked, matched_pattern)."""
         if not user_agent:
             return False, None
-        
-        patterns = cls.objects.filter(is_active=True)
+
+        patterns = cache.get(UA_PATTERN_CACHE_KEY)
+        if patterns is None:
+            patterns = list(cls.objects.filter(is_active=True))
+            cache.set(UA_PATTERN_CACHE_KEY, patterns, 300)
+
         for pattern in patterns:
             if pattern.matches(user_agent):
                 return True, pattern

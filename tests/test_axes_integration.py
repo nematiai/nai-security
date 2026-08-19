@@ -11,6 +11,7 @@ from nai_security.models import SecuritySettings
 from nai_security.handlers.axes_integration import (
     DynamicAxesHandler,
     get_dynamic_failure_limit,
+    refresh_axes_from_db,
 )
 
 
@@ -128,6 +129,42 @@ class AttemptExpiryTest(TestCase):
         self.assertTrue(django_settings.AXES_USE_ATTEMPT_EXPIRATION)
 
 
+class StaleWorkerAxesSettingsTest(TestCase):
+    """Other gunicorn workers must pick up admin changes on the next request."""
+
+    def setUp(self):
+        cache.clear()
+        SecuritySettings.objects.update_or_create(
+            pk=1,
+            defaults={
+                'max_login_attempts': 5,
+                'axes_cooloff_minutes': 15,
+                'axes_attempt_expiry_enabled': True,
+            },
+        )
+        cache.delete('security_settings')
+
+    def test_refresh_overwrites_stale_process_settings(self):
+        django_settings.AXES_COOLOFF_TIME = timedelta(minutes=99)
+        django_settings.AXES_USE_ATTEMPT_EXPIRATION = False
+        refresh_axes_from_db()
+        self.assertEqual(django_settings.AXES_COOLOFF_TIME, timedelta(minutes=15))
+        self.assertTrue(django_settings.AXES_USE_ATTEMPT_EXPIRATION)
+
+    def test_is_locked_refreshes_stale_process_settings(self):
+        from django.utils import timezone
+        django_settings.AXES_COOLOFF_TIME = timedelta(minutes=99)
+        django_settings.AXES_USE_ATTEMPT_EXPIRATION = False
+        handler = DynamicAxesHandler()
+        request = RequestFactory().post('/login/')
+        request.axes_ip_address = '1.2.3.4'
+        request.axes_user_agent = 't'
+        request.axes_attempt_time = timezone.now()
+        handler.is_locked(request, credentials={'username': 'nobody'})
+        self.assertEqual(django_settings.AXES_COOLOFF_TIME, timedelta(minutes=15))
+        self.assertTrue(django_settings.AXES_USE_ATTEMPT_EXPIRATION)
+
+
 class WhitelistBypassTest(TestCase):
     """
     Whitelisted users must bypass axes lockout — regression test for the bug
@@ -208,7 +245,7 @@ class WhitelistBypassTest(TestCase):
 
 
 class WhitelistAutoResetTest(TestCase):
-    """Saving a WhitelistedUser with exemption_type='all' must reset axes lockout."""
+    """Saving an active WhitelistedUser must reset axes lockout (any exemption)."""
 
     def setUp(self):
         from django.contrib.auth import get_user_model
@@ -238,7 +275,7 @@ class WhitelistAutoResetTest(TestCase):
             "Whitelisting with exemption_type='all' must clear AccessAttempt rows",
         )
 
-    def test_save_with_other_exemption_does_not_reset(self):
+    def test_save_with_other_exemption_also_resets(self):
         from axes.models import AccessAttempt
         from nai_security.models import WhitelistedUser
 
@@ -248,8 +285,8 @@ class WhitelistAutoResetTest(TestCase):
         WhitelistedUser.objects.create(user=self.user, exemption_type='rate_limit', is_active=True)
 
         self.assertEqual(
-            AccessAttempt.objects.filter(username='bob').count(), 1,
-            "Non-'all' exemptions must NOT touch axes state",
+            AccessAttempt.objects.filter(username='bob').count(), 0,
+            "Any active whitelist must clear AccessAttempt rows",
         )
 
     def test_save_inactive_does_not_reset(self):

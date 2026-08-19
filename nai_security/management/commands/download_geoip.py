@@ -2,6 +2,7 @@ import os
 import urllib.request
 from django.core.management.base import BaseCommand
 from django.conf import settings
+from nai_security.utils import resolve_geoip_db_path
 
 
 class Command(BaseCommand):
@@ -18,10 +19,11 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         output_path = options.get('output')
-        
+
         if not output_path:
             output_path = getattr(settings, 'GEOIP_PATH', None)
-        
+
+        output_path = resolve_geoip_db_path(output_path)
         if not output_path:
             output_path = os.path.join(settings.BASE_DIR, 'geoip', 'GeoLite2-Country.mmdb')
         

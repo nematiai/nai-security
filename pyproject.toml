@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "nai-security"
-version = "1.11.0"
+version = "1.12.0"
 description = "Django security app - IP/email/country blocking, rate limiting, login tracking, auto-blocking"
 readme = "README.md"
 license = "MIT"
@@ -30,12 +30,14 @@ classifiers = [
     "Framework :: Django :: 5.0",
     "Framework :: Django :: 5.2",
     "Framework :: Django :: 6.0",
+    "Framework :: Django :: 6.1",
     "Intended Audience :: Developers",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Security",
 ]
 dependencies = [
@@ -63,10 +65,11 @@ dev = [
     "black>=25.0",
     "ruff>=0.9",
 ]
+docs = ["mkdocs-material>=9.6"]
 
 [project.urls]
 Homepage = "https://github.com/nematiai/nai-security"
-Documentation = "https://github.com/nematiai/nai-security#readme"
+Documentation = "https://nematiai.github.io/nai-security/"
 Repository = "https://github.com/nematiai/nai-security"
 Issues = "https://github.com/nematiai/nai-security/issues"
 

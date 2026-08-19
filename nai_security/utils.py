@@ -1,4 +1,5 @@
 import logging
+import os
 from django.conf import settings
 from django.core.cache import cache
 
@@ -17,7 +18,7 @@ def get_geoip_reader():
     
     try:
         import geoip2.database
-        geoip_path = getattr(settings, 'GEOIP_PATH', None)
+        geoip_path = resolve_geoip_db_path(getattr(settings, 'GEOIP_PATH', None))
         
         if not geoip_path:
             logger.warning("GEOIP_PATH not configured in settings")
@@ -60,16 +61,30 @@ def get_country_from_ip(ip_address: str) -> str | None:
         return None
 
 
+def resolve_geoip_db_path(path: str | None) -> str | None:
+    """Return the .mmdb file path. Django's GEOIP_PATH may be a directory."""
+    if not path:
+        return None
+    if os.path.isdir(path):
+        return os.path.join(path, 'GeoLite2-Country.mmdb')
+    return path
+
+
 def get_client_ip(request) -> str:
-    """Extract real client IP from request, handling proxies."""
+    """
+    Extract client IP.
+
+    Forwarded headers (X-Forwarded-For, X-Real-IP) are ignored unless
+    NAI_SECURITY_TRUST_PROXY_HEADERS is True. Default is False so clients
+    cannot spoof their IP to bypass blocks or poison whitelist checks.
+    """
+    remote = request.META.get('REMOTE_ADDR') or '127.0.0.1'
+    if not getattr(settings, 'NAI_SECURITY_TRUST_PROXY_HEADERS', False):
+        return remote
     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
     if x_forwarded_for:
-        ip = x_forwarded_for.split(',')[0].strip()
-    else:
-        ip = request.META.get('HTTP_X_REAL_IP')
-        if not ip:
-            ip = request.META.get('REMOTE_ADDR', '127.0.0.1')
-    return ip
+        return x_forwarded_for.split(',')[0].strip()
+    return request.META.get('HTTP_X_REAL_IP') or remote
 
 
 def parse_user_agent(user_agent: str) -> dict:

@@ -4,8 +4,9 @@
 
 | Setting | Required | Description |
 |---------|----------|-------------|
-| `GEOIP_PATH` | Recommended | Path to MaxMind GeoLite2/GeoIP2 Country DB |
+| `GEOIP_PATH` | Recommended | Path to the GeoLite2/GeoIP2 Country `.mmdb` **file**, or a **directory** containing `GeoLite2-Country.mmdb` |
 | `NAI_SECURITY_EXEMPT_PATHS` | Optional | Paths that skip security middleware checks |
+| `NAI_SECURITY_TRUST_PROXY_HEADERS` | Optional | If `True`, trust `X-Forwarded-For` / `X-Real-IP`. Default `False` (clients cannot spoof IP) |
 
 ### Exempt paths
 

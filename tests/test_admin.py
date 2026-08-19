@@ -39,3 +39,11 @@ class AdminAccessTest(TestCase):
     def test_login_history_readonly(self):
         response = self.client.get('/admin/nai_security/loginhistory/add/')
         self.assertEqual(response.status_code, 403)
+
+    def test_axes_access_log_models_remain_registered(self):
+        from django.contrib.admin.sites import site
+        from axes.models import AccessAttempt, AccessLog, AccessFailureLog
+        registered = set(site._registry.keys())
+        self.assertIn(AccessAttempt, registered)
+        self.assertIn(AccessLog, registered)
+        self.assertIn(AccessFailureLog, registered)

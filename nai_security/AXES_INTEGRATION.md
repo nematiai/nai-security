@@ -8,7 +8,7 @@ Add to your `settings.py`:
 
 ```python
 # Use dynamic Axes handler
-AXES_HANDLER = 'nai_security.handlers.DynamicAxesHandler'
+AXES_HANDLER = 'nai_security.handlers.axes_integration.DynamicAxesHandler'
 
 # Optional: Set a fallback default (used if SecuritySettings fails)
 AXES_FAILURE_LIMIT = 5

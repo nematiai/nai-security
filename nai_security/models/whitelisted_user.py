@@ -50,7 +50,7 @@ class WhitelistedUser(models.Model):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         cache.delete(f"sec_user_exempt:{self.user_id}")
-        if self.is_active and self.exemption_type == 'all':
+        if self.is_active:
             self._reset_axes_lockout()
 
     def delete(self, *args, **kwargs):
@@ -61,8 +61,8 @@ class WhitelistedUser(models.Model):
     def _reset_axes_lockout(self):
         """
         Clear any active axes lockout for this user. Called on save() when the
-        exemption is 'all' so adding a user to whitelist immediately unlocks
-        them — not just permits future logins.
+        whitelist is active so adding a user immediately unlocks them — not just
+        permits future logins. exemption_type is ignored: axes bypass is binary.
         """
         try:
             from axes.utils import reset

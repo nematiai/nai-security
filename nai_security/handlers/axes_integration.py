@@ -1,9 +1,10 @@
 """
 Axes integration to use dynamic settings from SecuritySettings.
 
-In axes 8.x, AXES_FAILURE_LIMIT supports callables that are invoked per-request.
-AXES_COOLOFF_TIME and AXES_USE_ATTEMPT_EXPIRATION are set as static values
-and updated whenever SecuritySettings is saved.
+AXES_FAILURE_LIMIT is a per-request callable. AXES_COOLOFF_TIME and
+AXES_USE_ATTEMPT_EXPIRATION are booleans/timedeltas that axes reads as
+process-local settings, so we refresh them from SecuritySettings on each
+handler call (shared Django cache) instead of only on admin save.
 """
 import logging
 from datetime import timedelta
@@ -29,6 +30,20 @@ def get_dynamic_failure_limit(request: HttpRequest, credentials: Optional[dict] 
         return getattr(django_settings, 'AXES_FAILURE_LIMIT_DEFAULT', 5)
 
 
+def refresh_axes_from_db() -> None:
+    """Load cooloff/expiry from SecuritySettings into this process's Django settings."""
+    try:
+        from nai_security.models import SecuritySettings
+        sec = SecuritySettings.get_settings()
+        if sec.axes_cooloff_minutes > 0:
+            django_settings.AXES_COOLOFF_TIME = timedelta(minutes=sec.axes_cooloff_minutes)
+        else:
+            django_settings.AXES_COOLOFF_TIME = None
+        django_settings.AXES_USE_ATTEMPT_EXPIRATION = sec.axes_attempt_expiry_enabled
+    except Exception:
+        pass
+
+
 class DynamicAxesHandler(AxesDatabaseHandler):
     """
     Custom Axes handler that reads settings from the SecuritySettings model.
@@ -49,31 +64,15 @@ class DynamicAxesHandler(AxesDatabaseHandler):
             django_settings.AXES_FAILURE_LIMIT_DEFAULT = original_limit
 
         django_settings.AXES_FAILURE_LIMIT = get_dynamic_failure_limit
-        cls._update_cooloff_time()
-        cls._update_attempt_expiration()
+        refresh_axes_from_db()
 
     @classmethod
     def _update_cooloff_time(cls):
-        """Update AXES_COOLOFF_TIME from SecuritySettings."""
-        try:
-            from nai_security.models import SecuritySettings
-            settings = SecuritySettings.get_settings()
-            if settings.axes_cooloff_minutes > 0:
-                django_settings.AXES_COOLOFF_TIME = timedelta(minutes=settings.axes_cooloff_minutes)
-            else:
-                django_settings.AXES_COOLOFF_TIME = None
-        except Exception:
-            pass
+        refresh_axes_from_db()
 
     @classmethod
     def _update_attempt_expiration(cls):
-        """Update AXES_USE_ATTEMPT_EXPIRATION from SecuritySettings."""
-        try:
-            from nai_security.models import SecuritySettings
-            settings = SecuritySettings.get_settings()
-            django_settings.AXES_USE_ATTEMPT_EXPIRATION = settings.axes_attempt_expiry_enabled
-        except Exception:
-            pass
+        refresh_axes_from_db()
 
     # -------------------------------------------------------------------------
     # Whitelist bypass
@@ -160,6 +159,7 @@ class DynamicAxesHandler(AxesDatabaseHandler):
 
     def is_allowed(self, request: HttpRequest, credentials: Optional[dict] = None) -> bool:
         """Whitelisted IPs and users are always allowed — short-circuits axes checks."""
+        refresh_axes_from_db()
         if self._is_request_whitelisted(request, credentials):
             return True
         return super().is_allowed(request, credentials)
@@ -170,6 +170,7 @@ class DynamicAxesHandler(AxesDatabaseHandler):
         axes 8.x renamed `is_already_locked` -> `is_locked` (called from is_allowed
         and from axes.helpers.get_lockout_response).
         """
+        refresh_axes_from_db()
         if self._is_request_whitelisted(request, credentials):
             logger.debug("Axes lockout check skipped — whitelisted request")
             return False
@@ -177,6 +178,7 @@ class DynamicAxesHandler(AxesDatabaseHandler):
 
     def user_login_failed(self, sender, credentials, request, **kwargs):
         """Skip recording failures for whitelisted requests — keeps AccessAttempt clean."""
+        refresh_axes_from_db()
         if self._is_request_whitelisted(request, credentials):
             logger.debug("Axes failure recording skipped — whitelisted request")
             return

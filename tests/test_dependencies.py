@@ -83,6 +83,11 @@ class TestPyprojectDependencyPins:
         assert Version("0.90") in unfold.specifier
         assert Version("0.10") not in unfold.specifier
 
+    def test_django_61_and_python_314_classifiers(self):
+        project = _load_project()
+        assert "Framework :: Django :: 6.1" in project["classifiers"]
+        assert "Programming Language :: Python :: 3.14" in project["classifiers"]
+
 
 class TestInstalledDependencyVersions:
     @pytest.mark.parametrize(
@@ -139,5 +144,5 @@ class TestRuntimeImportContracts:
 
         project = _load_project()
         assert re.fullmatch(r"\d+\.\d+\.\d+", project["version"])
-        assert project["version"] == "1.11.0"
+        assert project["version"] == "1.12.0"
         assert nai_security.__version__ == project["version"]
