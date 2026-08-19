@@ -22,7 +22,9 @@ def test_prepare_writes_index_and_robots(tmp_path, monkeypatch):
 
     dest = prepare()
     index = (dest / "index.md").read_text(encoding="utf-8")
-    assert "title: NAI Security" in index
+    assert "title: \"NAI Security\"" in index
+    assert "description:" in index
+    assert index.startswith("---\n")
     assert "[Installation](Installation.md)" in index
     assert "# NAI Security\n" in index
     assert not (dest / "_Sidebar.md").exists()

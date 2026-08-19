@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 import shutil
 from pathlib import Path
@@ -55,7 +56,12 @@ def convert_wiki_links(text: str) -> str:
 
 def _front_matter(filename: str, title: str) -> str:
     description = PAGE_META.get(filename, "nai-security Django documentation.")
-    return f"---\ntitle: {title}\ndescription: {description}\n---\n\n"
+    return (
+        "---\n"
+        f"title: {json.dumps(title, ensure_ascii=True)}\n"
+        f"description: {json.dumps(description, ensure_ascii=True)}\n"
+        "---\n\n"
+    )
 
 
 def prepare() -> Path:
