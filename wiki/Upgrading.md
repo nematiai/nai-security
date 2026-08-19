@@ -1,9 +1,14 @@
 # Upgrading
 
 ```bash
-pip install -U "nai-security==1.12.0"
+pip install -U "nai-security==1.12.1"
 python manage.py migrate
 ```
+
+## 1.12.1
+
+- PyPI **Documentation** URL now points at https://nematiai.github.io/nai-security/
+- Wiki whitelist example uses `description` (the real `WhitelistedIP` field)
 
 ## 1.12.0
 

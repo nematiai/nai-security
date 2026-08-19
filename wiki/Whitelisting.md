@@ -53,6 +53,6 @@ WhitelistedUser.objects.update_or_create(
 
 WhitelistedIP.objects.update_or_create(
     ip_address="203.0.113.10",
-    defaults={"is_active": True, "reason": "Office network"},
+    defaults={"is_active": True, "description": "Office network"},
 )
 ```

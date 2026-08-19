@@ -219,6 +219,10 @@ Exemptions support optional expiration (`expires_at`) and can be toggled via `is
 
 > **Axes lockout note:** any active `WhitelistedUser` row exempts the user from django-axes lockout, regardless of `exemption_type`. The `exemption_type` field controls only the `SecurityMiddleware` checks (IP/country/rate-limit). See [Axes Integration → Whitelist bypass](#whitelist-bypass).
 
+## Upgrading to 1.12.1
+
+**Docs links:** PyPI Documentation now opens https://nematiai.github.io/nai-security/ (no app API change).
+
 ## Upgrading to 1.12.0
 
 **Security / behavior fix (no migrations):**
