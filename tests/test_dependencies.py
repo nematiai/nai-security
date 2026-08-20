@@ -48,7 +48,17 @@ class TestPyprojectDependencyPins:
         reqs = [Requirement(r) for r in project["dependencies"]]
         requests_req = next((r for r in reqs if r.name.lower() == "requests"), None)
         assert requests_req is not None
-        assert Version("2.28") in requests_req.specifier
+        assert Version("2.32.4") in requests_req.specifier
+        assert Version("2.28") not in requests_req.specifier
+
+    def test_django_floor_is_52(self):
+        project = _load_project()
+        django = next(
+            Requirement(r) for r in project["dependencies"] if Requirement(r).name == "django"
+        )
+        assert Version("5.2") in django.specifier
+        assert Version("4.2") not in django.specifier
+        assert Version("5.0") not in django.specifier
 
     def test_geoip2_major_is_capped(self):
         project = _load_project()
@@ -85,18 +95,42 @@ class TestPyprojectDependencyPins:
 
     def test_django_61_and_python_314_classifiers(self):
         project = _load_project()
+        assert "Framework :: Django :: 5.2" in project["classifiers"]
         assert "Framework :: Django :: 6.1" in project["classifiers"]
+        assert "Framework :: Django :: 4.2" not in project["classifiers"]
+        assert "Framework :: Django :: 5.0" not in project["classifiers"]
         assert "Programming Language :: Python :: 3.14" in project["classifiers"]
+
+    def test_celery_optional_is_declared(self):
+        project = _load_project()
+        celery = Requirement(project["optional-dependencies"]["celery"][0])
+        assert celery.name == "celery"
+        assert Version("5.3") in celery.specifier
+        assert Version("6.0") not in celery.specifier
+
+    def test_dev_extras_include_test_and_audit_tools(self):
+        project = _load_project()
+        names = {Requirement(r).name.lower() for r in project["optional-dependencies"]["dev"]}
+        assert {
+            "pytest-cov",
+            "hypothesis",
+            "time-machine",
+            "responses",
+            "fakeredis",
+            "model-bakery",
+            "mypy",
+            "pip-audit",
+        } <= names
 
 
 class TestInstalledDependencyVersions:
     @pytest.mark.parametrize(
         "req_str",
         [
-            "django>=4.2",
+            "django>=5.2",
             "geoip2>=5.0,<6",
             "redis>=5.0,<9",
-            "requests>=2.28",
+            "requests>=2.32.4",
         ],
     )
     def test_core_requirement_installed(self, req_str):
@@ -121,7 +155,7 @@ class TestRuntimeImportContracts:
         import requests
 
         assert hasattr(requests, "get")
-        assert Version(requests.__version__) >= Version("2.28")
+        assert Version(requests.__version__) >= Version("2.32.4")
 
     def test_geoip2_reader_api_available(self):
         import geoip2.database
@@ -144,5 +178,5 @@ class TestRuntimeImportContracts:
 
         project = _load_project()
         assert re.fullmatch(r"\d+\.\d+\.\d+", project["version"])
-        assert project["version"] == "1.12.2"
+        assert project["version"] == "1.13.0"
         assert nai_security.__version__ == project["version"]

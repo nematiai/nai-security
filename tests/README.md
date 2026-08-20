@@ -1,4 +1,5 @@
 ```powershell
 
-python -m django test tests --settings=tests.settings --verbosity=2
+python -m pytest
+python -m pytest --cov=nai_security --cov-report=term-missing
 ```

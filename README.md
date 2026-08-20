@@ -30,10 +30,16 @@ Django security package for IP blocking, country blocking, email blocking, rate 
 pip install nai-security
 ```
 
-With all optional dependencies:
+With Django integration extras (axes, ratelimit, import-export, unfold):
 
 ```bash
 pip install nai-security[all]
+```
+
+Background tasks extra (not included in `[all]`):
+
+```bash
+pip install nai-security[celery]
 ```
 
 Or install from GitHub:
@@ -97,17 +103,17 @@ python manage.py download_geoip
 ## Dependencies
 
 **Required:**
-- Django >= 4.2
+- Django >= 5.2
 - geoip2 >= 5.0, < 6
 - redis >= 5.0, < 9
-- requests >= 2.28
+- requests >= 2.32.4
 
 **Optional:**
 - `django-axes >= 8.3.1, < 9` — login attempt tracking and lockout; without it axes features are silently disabled
 - `django-ratelimit >= 4.1` — rate limiting per endpoint
 - `django-import-export >= 4.0, < 5` — admin import/export for blocked emails/domains; without it those buttons are hidden
 - `django-unfold >= 0.90` — admin UI theme; without it falls back to standard Django admin (0.100+ needs Python >= 3.12)
-- `celery` — background tasks (auto-block processing, sync, reports); without it tasks are no-ops
+- `celery >= 5.3, < 6` — background tasks (auto-block processing, sync, reports); without it tasks are no-ops (`pip install nai-security[celery]`)
 
 ## Axes Integration
 
@@ -220,6 +226,15 @@ Exemptions support optional expiration (`expires_at`) and can be toggled via `is
 
 > **Axes lockout note:** any active `WhitelistedUser` row exempts the user from django-axes lockout, regardless of `exemption_type`. The `exemption_type` field controls only the `SecurityMiddleware` checks (IP/country/rate-limit). See [Axes Integration → Whitelist bypass](#whitelist-bypass).
 
+## Upgrading to 1.13.0
+
+**Install-time / support matrix (no app API change):**
+
+- Required Django floor is now **5.2** (4.2 and 5.0 are past end of support).
+- Required `requests` floor is now **2.32.4**.
+- New optional extra: `pip install nai-security[celery]` (`celery>=5.3,<6`). `[all]` is unchanged (axes, ratelimit, import-export, unfold).
+- Dev extra adds pytest-cov, hypothesis, time-machine, responses, fakeredis, model-bakery, mypy, and pip-audit.
+
 ## Upgrading to 1.12.2
 
 Metadata only: NEMATI AI links (https://nemati.ai) on PyPI, docs, and wiki. No app API change.
@@ -270,7 +285,10 @@ Metadata only: NEMATI AI links (https://nemati.ai) on PyPI, docs, and wiki. No a
 ## Testing
 
 ```bash
+pip install -e ".[dev,all]"
 python -m pytest
+python -m pytest --cov=nai_security --cov-report=term-missing
+pip-audit
 ```
 
 ## License

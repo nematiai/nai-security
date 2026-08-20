@@ -1,6 +1,12 @@
 # Celery Tasks
 
-Celery is optional. Without Celery, task callables are no-ops / unused.
+Celery is optional. Install it with:
+
+```bash
+pip install "nai-security[celery]"
+```
+
+That pulls `celery>=5.3,<6`. Without Celery, task callables are no-ops / unused. `[all]` does not include Celery.
 
 Suggested beat schedule:
 

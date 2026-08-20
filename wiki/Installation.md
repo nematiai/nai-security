@@ -19,6 +19,15 @@ pip install "nai-security[axes]"
 pip install "nai-security[ratelimit]"
 pip install "nai-security[import-export]"
 pip install "nai-security[unfold]"
+pip install "nai-security[celery]"
+```
+
+`[all]` is axes + ratelimit + import-export + unfold. Celery is separate.
+
+For local tests and audit tools:
+
+```bash
+pip install -e ".[dev,all]"
 ```
 
 ## 1. Add the app

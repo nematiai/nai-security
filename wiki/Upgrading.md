@@ -1,9 +1,18 @@
 # Upgrading
 
 ```bash
-pip install -U "nai-security==1.12.2"
+pip install -U "nai-security==1.13.0"
 python manage.py migrate
 ```
+
+## 1.13.0
+
+Install-time / support matrix (no app API or migrations):
+
+- **Django >= 5.2** required. Django 4.2 and 5.0 are past end of support.
+- **requests >= 2.32.4** required.
+- New extra: `pip install nai-security[celery]` (`celery>=5.3,<6`). `[all]` is unchanged.
+- Dev extra: pytest-cov, hypothesis, time-machine, responses, fakeredis, model-bakery, mypy, pip-audit.
 
 ## 1.12.2
 
