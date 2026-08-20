@@ -43,9 +43,13 @@ Allow: /
 Sitemap: https://nematiai.github.io/nai-security/sitemap.xml
 """
 
-# Google Search Console HTML-file verification. Keep this file in the
-# repo and on Pages; Google re-checks it after the first Verify click.
-GOOGLE_SITE_VERIFY = ROOT / "google4e3f9dd160c3aab0.html"
+# Google Search Console HTML-file verification. Drop the file Search Console
+# issues for THIS property at the repo root; every google*.html there is
+# published at the site root, which is where Google looks. Not pinned to one
+# name: a token belongs to one property, and a second property needs a second
+# file rather than an edit here.
+def verification_files() -> list[Path]:
+    return sorted(ROOT.glob("google*.html"))
 
 
 def convert_wiki_links(text: str) -> str:
@@ -86,7 +90,8 @@ def prepare() -> Path:
         dest.write_text(_front_matter(dest_name, first_line) + body, encoding="utf-8", newline="\n")
 
     (OUT / "robots.txt").write_text(ROBOTS, encoding="utf-8", newline="\n")
-    shutil.copyfile(GOOGLE_SITE_VERIFY, OUT / GOOGLE_SITE_VERIFY.name)
+    for verify in verification_files():
+        shutil.copyfile(verify, OUT / verify.name)
     styles = OUT / "stylesheets"
     styles.mkdir()
     (styles / "extra.css").write_text(EXTRA_CSS, encoding="utf-8", newline="\n")

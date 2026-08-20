@@ -29,24 +29,40 @@ def test_prepare_writes_index_and_robots(tmp_path, monkeypatch):
     assert "# NAI Security\n" in index
     assert not (dest / "_Sidebar.md").exists()
     assert "Sitemap:" in (dest / "robots.txt").read_text(encoding="utf-8")
-    assert (dest / "google4e3f9dd160c3aab0.html").read_bytes() == (
-        b"google-site-verification: google4e3f9dd160c3aab0.html"
-    )
     assert (dest / "stylesheets" / "extra.css").is_file()
     assert Path(dest / "Installation.md").is_file()
 
 
-def test_google_verify_file_is_under_sitemap_xml(tmp_path):
-    from tools.mkdocs_hooks import place_verify_under_sitemap
+def test_verification_files_land_at_the_site_root(tmp_path, monkeypatch):
+    """Google looks for the token at the property URL, which for a Pages project
+    site is the site root — not under sitemap.xml, which must stay a file."""
+    import tools.prepare_docs as prep
 
-    site = tmp_path / "site"
-    site.mkdir()
-    (site / "sitemap.xml").write_text("<?xml version='1.0'?><urlset/>", encoding="utf-8")
-    verify = tmp_path / "google4e3f9dd160c3aab0.html"
-    verify.write_bytes(b"google-site-verification: google4e3f9dd160c3aab0.html")
+    root = tmp_path / "repo"
+    (root / "wiki").mkdir(parents=True)
+    (root / "wiki" / "Home.md").write_text("# NAI Security Wiki\n", encoding="utf-8")
+    (root / "googleabc123.html").write_bytes(b"google-site-verification: googleabc123.html")
+    out = tmp_path / ".docs-build"
+    monkeypatch.setattr(prep, "ROOT", root)
+    monkeypatch.setattr(prep, "WIKI", root / "wiki")
+    monkeypatch.setattr(prep, "OUT", out)
 
-    dest = place_verify_under_sitemap(site, verify)
-    assert dest == site / "sitemap.xml" / "google4e3f9dd160c3aab0.html"
-    assert dest.read_bytes() == b"google-site-verification: google4e3f9dd160c3aab0.html"
-    assert not (site / "sitemap.xml").is_file()
-    assert (site / "sitemap.xml").is_dir()
+    dest = prepare()
+    assert (dest / "googleabc123.html").read_bytes() == b"google-site-verification: googleabc123.html"
+    assert not (dest / "sitemap.xml").exists()
+
+
+def test_a_second_property_token_needs_no_code_change(tmp_path, monkeypatch):
+    import tools.prepare_docs as prep
+
+    root = tmp_path / "repo"
+    (root / "wiki").mkdir(parents=True)
+    (root / "wiki" / "Home.md").write_text("# NAI Security Wiki\n", encoding="utf-8")
+    (root / "googleone.html").write_bytes(b"one")
+    (root / "googletwo.html").write_bytes(b"two")
+    monkeypatch.setattr(prep, "ROOT", root)
+    monkeypatch.setattr(prep, "WIKI", root / "wiki")
+    monkeypatch.setattr(prep, "OUT", tmp_path / ".docs-build")
+
+    dest = prepare()
+    assert (dest / "googleone.html").is_file() and (dest / "googletwo.html").is_file()
