@@ -12,6 +12,8 @@ site_dir: site
 theme:
   name: material
   custom_dir: overrides
+  logo: assets/logo.svg
+  favicon: assets/favicon.ico
   font:
     text: Inter
     code: JetBrains Mono
@@ -75,6 +77,7 @@ extra_css:
   - stylesheets/extra.css
 
 extra:
+  homepage: https://nemati.ai
   version: "1.13.0"
   social:
     - icon: fontawesome/brands/github

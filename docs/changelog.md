@@ -7,6 +7,7 @@
 | 01:54 | modified | pyproject.toml, nai_security/__init__.py | 1.13.0: Django >=5.2, requests >=2.32.4, celery extra, expanded dev extra (pytest-cov, hypothesis, time-machine, responses, fakeredis, model-bakery, mypy, pip-audit), ruff S + coverage/mypy tool config | manual |
 | 01:54 | modified | tests/test_dependencies.py | Contract tests for Django 5.2 floor, requests 2.32.4, celery extra, new dev tools, dropped 4.2/5.0 classifiers | manual |
 | 01:54 | modified | README.md, wiki/Home.md, wiki/Installation.md, wiki/Upgrading.md, wiki/Celery-Tasks.md, tools/prepare_docs.py, mkdocs.yml, overrides/main.html | Docs for 1.13.0 support matrix, extras, testing/audit commands; MkDocs extra.version + JSON-LD softwareVersion | manual |
+| 01:59 | modified | mkdocs.yml, overrides/main.html, tools/prepare_docs.py, docs/assets/, .github/workflows/docs.yml | NEMATI AI logo + favicon on MkDocs (from nemati.ai); logo links to https://nemati.ai | manual |
 
 ## 2026-05-02
 

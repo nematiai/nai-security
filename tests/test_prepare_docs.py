@@ -31,6 +31,8 @@ def test_prepare_writes_index_and_robots(tmp_path, monkeypatch):
     assert "Sitemap:" in (dest / "robots.txt").read_text(encoding="utf-8")
     assert (dest / "stylesheets" / "extra.css").is_file()
     assert Path(dest / "Installation.md").is_file()
+    assert (dest / "assets" / "logo.svg").is_file()
+    assert (dest / "assets" / "favicon.ico").is_file()
 
 
 def test_verification_files_land_at_the_site_root(tmp_path, monkeypatch):
@@ -66,3 +68,23 @@ def test_a_second_property_token_needs_no_code_change(tmp_path, monkeypatch):
 
     dest = prepare()
     assert (dest / "googleone.html").is_file() and (dest / "googletwo.html").is_file()
+
+
+def test_prepare_copies_brand_assets_when_present(tmp_path, monkeypatch):
+    import tools.prepare_docs as prep
+
+    root = tmp_path / "repo"
+    (root / "wiki").mkdir(parents=True)
+    (root / "wiki" / "Home.md").write_text("# NAI Security Wiki\n", encoding="utf-8")
+    assets = root / "docs" / "assets"
+    assets.mkdir(parents=True)
+    (assets / "logo.svg").write_text("<svg xmlns='http://www.w3.org/2000/svg'></svg>\n", encoding="utf-8")
+    (assets / "favicon.ico").write_bytes(b"\x00\x00\x01\x00")
+    monkeypatch.setattr(prep, "ROOT", root)
+    monkeypatch.setattr(prep, "WIKI", root / "wiki")
+    monkeypatch.setattr(prep, "ASSETS", assets)
+    monkeypatch.setattr(prep, "OUT", tmp_path / ".docs-build")
+
+    dest = prepare()
+    assert (dest / "assets" / "logo.svg").is_file()
+    assert (dest / "assets" / "favicon.ico").read_bytes() == b"\x00\x00\x01\x00"

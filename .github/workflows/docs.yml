@@ -9,6 +9,7 @@ on:
       - tools/prepare_docs.py
       - tools/mkdocs_hooks.py
       - overrides/**
+      - docs/assets/**
       - google4e3f9dd160c3aab0.html
       - .github/workflows/docs.yml
   workflow_dispatch:

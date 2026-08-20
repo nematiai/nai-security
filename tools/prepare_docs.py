@@ -12,6 +12,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 WIKI = ROOT / "wiki"
 OUT = ROOT / ".docs-build"
+ASSETS = ROOT / "docs" / "assets"
 WIKI_LINK = re.compile(r"\[\[([^\]|#]+)(?:#[^\]|]+)?(?:\|([^\]]+))?\]\]")
 
 PAGE_META = {
@@ -33,6 +34,11 @@ EXTRA_CSS = """\
 }
 .md-typeset code {
   font-size: 0.85em;
+}
+.md-header__button.md-logo img,
+.md-header__button.md-logo svg {
+  height: 1.8rem;
+  width: auto;
 }
 """
 
@@ -95,6 +101,12 @@ def prepare() -> Path:
     styles = OUT / "stylesheets"
     styles.mkdir()
     (styles / "extra.css").write_text(EXTRA_CSS, encoding="utf-8", newline="\n")
+    if ASSETS.is_dir():
+        dest_assets = OUT / "assets"
+        dest_assets.mkdir()
+        for src in sorted(ASSETS.iterdir()):
+            if src.is_file():
+                shutil.copyfile(src, dest_assets / src.name)
     return OUT
 
 
