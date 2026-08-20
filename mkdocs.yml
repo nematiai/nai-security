@@ -55,6 +55,9 @@ nav:
   - Celery Tasks: Celery-Tasks.md
   - Upgrading: Upgrading.md
 
+hooks:
+  - tools/mkdocs_hooks.py
+
 plugins:
   - search
   - privacy:

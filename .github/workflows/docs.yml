@@ -7,6 +7,7 @@ on:
       - wiki/**
       - mkdocs.yml
       - tools/prepare_docs.py
+      - tools/mkdocs_hooks.py
       - overrides/**
       - google4e3f9dd160c3aab0.html
       - .github/workflows/docs.yml

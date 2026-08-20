@@ -34,3 +34,19 @@ def test_prepare_writes_index_and_robots(tmp_path, monkeypatch):
     )
     assert (dest / "stylesheets" / "extra.css").is_file()
     assert Path(dest / "Installation.md").is_file()
+
+
+def test_google_verify_file_is_under_sitemap_xml(tmp_path):
+    from tools.mkdocs_hooks import place_verify_under_sitemap
+
+    site = tmp_path / "site"
+    site.mkdir()
+    (site / "sitemap.xml").write_text("<?xml version='1.0'?><urlset/>", encoding="utf-8")
+    verify = tmp_path / "google4e3f9dd160c3aab0.html"
+    verify.write_bytes(b"google-site-verification: google4e3f9dd160c3aab0.html")
+
+    dest = place_verify_under_sitemap(site, verify)
+    assert dest == site / "sitemap.xml" / "google4e3f9dd160c3aab0.html"
+    assert dest.read_bytes() == b"google-site-verification: google4e3f9dd160c3aab0.html"
+    assert not (site / "sitemap.xml").is_file()
+    assert (site / "sitemap.xml").is_dir()
