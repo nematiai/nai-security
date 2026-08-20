@@ -29,8 +29,8 @@ def test_prepare_writes_index_and_robots(tmp_path, monkeypatch):
     assert "# NAI Security\n" in index
     assert not (dest / "_Sidebar.md").exists()
     assert "Sitemap:" in (dest / "robots.txt").read_text(encoding="utf-8")
-    assert (dest / "google4e3f9dd160c3aab0.html").read_text(encoding="utf-8") == (
-        "google-site-verification: google4e3f9dd160c3aab0.html\n"
+    assert (dest / "google4e3f9dd160c3aab0.html").read_bytes() == (
+        b"google-site-verification: google4e3f9dd160c3aab0.html"
     )
     assert (dest / "stylesheets" / "extra.css").is_file()
     assert Path(dest / "Installation.md").is_file()

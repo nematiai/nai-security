@@ -8,6 +8,7 @@ on:
       - mkdocs.yml
       - tools/prepare_docs.py
       - overrides/**
+      - google4e3f9dd160c3aab0.html
       - .github/workflows/docs.yml
   workflow_dispatch:
 

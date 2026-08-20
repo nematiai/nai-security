@@ -43,10 +43,9 @@ Allow: /
 Sitemap: https://nematiai.github.io/nai-security/sitemap.xml
 """
 
-# Google Search Console HTML-file verification. Served at
-# https://nematiai.github.io/nai-security/google4e3f9dd160c3aab0.html
-GOOGLE_SITE_VERIFY_NAME = "google4e3f9dd160c3aab0.html"
-GOOGLE_SITE_VERIFY = "google-site-verification: google4e3f9dd160c3aab0.html\n"
+# Google Search Console HTML-file verification. Keep this file in the
+# repo and on Pages; Google re-checks it after the first Verify click.
+GOOGLE_SITE_VERIFY = ROOT / "google4e3f9dd160c3aab0.html"
 
 
 def convert_wiki_links(text: str) -> str:
@@ -87,7 +86,7 @@ def prepare() -> Path:
         dest.write_text(_front_matter(dest_name, first_line) + body, encoding="utf-8", newline="\n")
 
     (OUT / "robots.txt").write_text(ROBOTS, encoding="utf-8", newline="\n")
-    (OUT / GOOGLE_SITE_VERIFY_NAME).write_text(GOOGLE_SITE_VERIFY, encoding="utf-8")
+    shutil.copyfile(GOOGLE_SITE_VERIFY, OUT / GOOGLE_SITE_VERIFY.name)
     styles = OUT / "stylesheets"
     styles.mkdir()
     (styles / "extra.css").write_text(EXTRA_CSS, encoding="utf-8", newline="\n")
