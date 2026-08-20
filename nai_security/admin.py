@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from django.utils import timezone
 try:
     from unfold.admin import ModelAdmin
@@ -115,12 +116,12 @@ class BlockedIPAdmin(ModelAdmin):
 
     def status_badge(self, obj):
         if obj.is_expired():
-            return format_html("<span style=\"color: orange;\">Expired</span>")
+            return mark_safe("<span style=\"color: orange;\">Expired</span>")
         if obj.is_auto_blocked:
-            return format_html("<span style=\"color: purple;\">Auto</span>")
+            return mark_safe("<span style=\"color: purple;\">Auto</span>")
         if obj.is_active:
-            return format_html("<span style=\"color: red;\">Blocked</span>")
-        return format_html("<span style=\"color: gray;\">Inactive</span>")
+            return mark_safe("<span style=\"color: red;\">Blocked</span>")
+        return mark_safe("<span style=\"color: gray;\">Inactive</span>")
     status_badge.short_description = "Status"
 
 
@@ -200,10 +201,10 @@ class WhitelistedUserAdmin(ModelAdmin):
 
     def status_badge(self, obj):
         if not obj.is_active:
-            return format_html("<span style=\"color: red;\">Inactive</span>")
+            return mark_safe("<span style=\"color: red;\">Inactive</span>")
         if obj.expires_at and obj.expires_at < timezone.now():
-            return format_html("<span style=\"color: orange;\">Expired</span>")
-        return format_html("<span style=\"color: green;\">Active</span>")
+            return mark_safe("<span style=\"color: orange;\">Expired</span>")
+        return mark_safe("<span style=\"color: green;\">Active</span>")
     status_badge.short_description = "Status"
 
 
@@ -243,7 +244,7 @@ class LoginHistoryAdmin(ModelAdmin):
                 "<span style=\"color: red;\" title=\"{}\">WARNING</span>",
                 obj.suspicious_reason,
             )
-        return format_html("<span style=\"color: green;\">OK</span>")
+        return mark_safe("<span style=\"color: green;\">OK</span>")
     suspicious_badge.short_description = "Suspicious"
 
     def has_add_permission(self, request):

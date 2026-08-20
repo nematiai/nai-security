@@ -47,3 +47,33 @@ class AdminAccessTest(TestCase):
         self.assertIn(AccessAttempt, registered)
         self.assertIn(AccessLog, registered)
         self.assertIn(AccessFailureLog, registered)
+
+
+class BadgeRenderingTest(TestCase):
+    """Django rejects format_html() called with a lone literal and no args.
+
+    Every badge below used to raise TypeError, which surfaced as a 500 on the
+    changelist rather than as an import error, so nothing caught it until a
+    page was actually opened.
+    """
+
+    def test_every_badge_helper_renders(self):
+        from django.contrib import admin as dj_admin
+
+        for model, model_admin in dj_admin.site._registry.items():
+            if model._meta.app_label != 'nai_security':
+                continue
+            for name in getattr(model_admin, 'list_display', ()):
+                # '__str__' is a legal list_display entry and resolves to the
+                # ModelAdmin's own dunder, not to a badge helper.
+                if name.startswith('_'):
+                    continue
+                attr = getattr(model_admin, name, None)
+                if not callable(attr):
+                    continue
+                try:
+                    attr(model())
+                except (TypeError, ValueError) as broken:
+                    self.fail(f"{model_admin.__class__.__name__}.{name} raised {broken!r}")
+                except Exception:
+                    pass

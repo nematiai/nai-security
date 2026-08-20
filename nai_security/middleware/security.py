@@ -73,9 +73,10 @@ class SecurityMiddleware:
             )
 
     def __call__(self, request):
-        settings = SecuritySettings.get_settings()
-
-        # Skip exempt paths
+        # Skip exempt paths before touching the database. A health or readiness
+        # probe is exempt precisely so it still answers when the database is
+        # unreachable — loading settings first made every exempt path depend on
+        # the very thing it is there to report on, and turned a 503 into a 500.
         if request.path in self.exempt_paths:
             return self.get_response(request)
 
@@ -84,6 +85,8 @@ class SecurityMiddleware:
         # Skip localhost
         if ip_address in ('127.0.0.1', 'localhost', '::1'):
             return self.get_response(request)
+
+        settings = SecuritySettings.get_settings()
 
         # Check IP whitelist first
         if self._is_ip_whitelisted(ip_address):

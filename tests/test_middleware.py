@@ -97,6 +97,24 @@ class ExemptPathTest(SecurityMiddlewareBaseTest):
         self.assertEqual(mw(request).status_code, 200)
 
 
+    def test_an_exempt_path_touches_no_database(self):
+        """A health probe is exempt so it still answers when the database is
+        down. Loading SecuritySettings before the exempt check made every
+        exempt path depend on the very thing it exists to report on."""
+        cache.clear()
+        with self.assertNumQueries(0):
+            response = self.middleware(self._make_request(path='/health/'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_an_exempt_path_answers_when_the_database_is_unavailable(self):
+        cache.clear()
+        with patch.object(
+            SecuritySettings, 'get_settings', side_effect=AssertionError('db touched')
+        ):
+            response = self.middleware(self._make_request(path='/health/'))
+        self.assertEqual(response.status_code, 200)
+
+
 # ------------------------------------------------------------------
 # Localhost bypass
 # ------------------------------------------------------------------
