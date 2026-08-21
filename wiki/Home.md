@@ -4,7 +4,7 @@ Django security package for IP / country / email / domain / user-agent blocking,
 
 **Docs:** https://nematiai.github.io/nai-security/  
 **PyPI:** https://pypi.org/project/nai-security/  
-**Current release:** `1.12.2`  
+**Current release:** `1.13.0`  
 **Repo:** https://github.com/nematiai/nai-security  
 **NEMATI AI:** https://nemati.ai
 
@@ -63,7 +63,7 @@ Then open Django admin → **Security Settings** and enable the checks you need.
 - Auto-blocks noisy IPs/countries from security events
 - Optional django-axes handler with admin-controlled limits
 
-## Support matrix (1.12.2)
+## Support matrix (1.13.0)
 
 **Required:** Django >= 4.2, geoip2 >= 5,<6, redis >= 5,<9, requests >= 2.28  
 

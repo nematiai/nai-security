@@ -220,6 +220,10 @@ Exemptions support optional expiration (`expires_at`) and can be toggled via `is
 
 > **Axes lockout note:** any active `WhitelistedUser` row exempts the user from django-axes lockout, regardless of `exemption_type`. The `exemption_type` field controls only the `SecurityMiddleware` checks (IP/country/rate-limit). See [Axes Integration → Whitelist bypass](#whitelist-bypass).
 
+## Upgrading to 1.13.0
+
+No application API or dependency changes. Docs site no longer shows the MkDocs generator mark.
+
 ## Upgrading to 1.12.2
 
 Metadata only: NEMATI AI links (https://nemati.ai) on PyPI, docs, and wiki. No app API change.

@@ -1,9 +1,14 @@
 # Upgrading
 
 ```bash
-pip install -U "nai-security==1.12.2"
+pip install -U "nai-security==1.13.0"
 python manage.py migrate
 ```
+
+## 1.13.0
+
+- No application API or dependency changes
+- Docs site hides the MkDocs generator mark
 
 ## 1.12.2
 

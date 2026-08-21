@@ -144,5 +144,5 @@ class TestRuntimeImportContracts:
 
         project = _load_project()
         assert re.fullmatch(r"\d+\.\d+\.\d+", project["version"])
-        assert project["version"] == "1.12.2"
+        assert project["version"] == "1.13.0"
         assert nai_security.__version__ == project["version"]
