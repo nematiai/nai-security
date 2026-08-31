@@ -37,6 +37,9 @@ With Django integration extras (axes, ratelimit, import-export, unfold):
 pip install nai-security[all]
 ```
 
+Each extra also needs its app in `INSTALLED_APPS` to become active (`"axes"`, `"unfold"`,
+`"import_export"`). Installing an extra without listing its app is safe — the feature is just off.
+
 Background tasks extra (not included in `[all]`):
 
 ```bash
@@ -226,6 +229,12 @@ Exempt specific users from security checks via the admin panel or ORM:
 Exemptions support optional expiration (`expires_at`) and can be toggled via `is_active`.
 
 > **Axes lockout note:** any active `WhitelistedUser` row exempts the user from django-axes lockout, regardless of `exemption_type`. The `exemption_type` field controls only the `SecurityMiddleware` checks (IP/country/rate-limit). See [Axes Integration → Whitelist bypass](#whitelist-bypass).
+
+## Upgrading to 1.14.1
+
+Bug-fix only. Two startup crashes on installs without the full extra set: a duplicate-base
+`TypeError` when `django-import-export` is absent, and a `RuntimeError` when `django-axes` is
+installed but not in `INSTALLED_APPS`. No API change, no migration.
 
 ## Upgrading to 1.14.0
 

@@ -1,5 +1,6 @@
 import logging
 from django.contrib.auth.signals import user_logged_in
+from django.apps import apps
 from django.dispatch import receiver
 from django.utils import timezone
 from datetime import timedelta
@@ -85,7 +86,7 @@ def log_successful_login(sender, request, user, **kwargs):
 
 
 # Django-axes signal integration
-try:
+if apps.is_installed('axes'):
     from axes.signals import user_locked_out
     
     @receiver(user_locked_out)
@@ -109,5 +110,5 @@ try:
         )
         logger.warning(f"AXES_LOCK: {ip} - Username: {username}")
 
-except ImportError:
-    logger.debug("django-axes not installed, skipping signal registration")
+else:
+    logger.debug("django-axes not in INSTALLED_APPS, skipping signal registration")

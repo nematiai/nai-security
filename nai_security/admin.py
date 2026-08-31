@@ -1,3 +1,4 @@
+from django.apps import apps
 from django.contrib import admin
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
@@ -9,9 +10,10 @@ except ImportError:
 try:
     from import_export import resources
     from import_export.admin import ImportExportModelAdmin
+    IMPORT_EXPORT_BASES = (ImportExportModelAdmin, ModelAdmin)
 except ImportError:
     resources = None
-    ImportExportModelAdmin = ModelAdmin
+    IMPORT_EXPORT_BASES = (ModelAdmin,)
 
 from .models import (
     BlockedCountry, BlockedIP, BlockedEmail, BlockedDomain,
@@ -19,7 +21,7 @@ from .models import (
     RateLimitRule, LoginHistory, SecurityLog, SecuritySettings,
 )
 
-try:
+if apps.is_installed('axes'):
     from axes.models import AccessAttempt
     from axes.utils import reset as axes_reset
     try:
@@ -27,7 +29,7 @@ try:
     except admin.sites.NotRegistered:
         pass
     AXES_INSTALLED = True
-except ImportError:
+else:
     AXES_INSTALLED = False
     axes_reset = None
 
@@ -126,7 +128,7 @@ class BlockedIPAdmin(ModelAdmin):
 
 
 @admin.register(BlockedEmail)
-class BlockedEmailAdmin(ImportExportModelAdmin, ModelAdmin):
+class BlockedEmailAdmin(*IMPORT_EXPORT_BASES):
     resource_class = BlockedEmailResource if BlockedEmailResource is not None else None
     list_display = ["email_display", "is_active", "is_auto_blocked", "reason_short", "created_at"]
     list_filter = ["is_active", "is_auto_blocked", "created_at"]
@@ -147,7 +149,7 @@ class BlockedEmailAdmin(ImportExportModelAdmin, ModelAdmin):
 
 
 @admin.register(BlockedDomain)
-class BlockedDomainAdmin(ImportExportModelAdmin, ModelAdmin):
+class BlockedDomainAdmin(*IMPORT_EXPORT_BASES):
     resource_class = BlockedDomainResource if BlockedDomainResource is not None else None
     list_display = ["domain", "domain_type", "is_active", "is_auto_synced", "created_at"]
     list_filter = ["is_active", "is_auto_synced", "domain_type", "created_at"]

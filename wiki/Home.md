@@ -4,7 +4,7 @@ Django security package for IP / country / email / domain / user-agent blocking,
 
 **Docs:** https://nematiai.github.io/nai-security/  
 **PyPI:** https://pypi.org/project/nai-security/  
-**Current release:** `1.14.0`  
+**Current release:** `1.14.1`  
 **Repo:** https://github.com/nematiai/nai-security  
 **NEMATI AI:** https://nemati.ai
 
@@ -64,7 +64,7 @@ Then open Django admin → **Security Settings** and enable the checks you need.
 - Blocks scanner probes for dotfiles and leak paths (`/.git`, `/.env`, `/server-status`)
 - Optional django-axes handler with admin-controlled limits
 
-## Support matrix (1.14.0)
+## Support matrix (1.14.1)
 
 **Required:** Django >= 5.2, geoip2 >= 5,<6, redis >= 5,<9, requests >= 2.32.4  
 

@@ -34,13 +34,16 @@ pip install -e ".[dev,all]"
 
 ```python
 INSTALLED_APPS = [
-    # if using Unfold theme:
-    # "unfold",
-    # "import_export",
-    # "axes",
+    # Add the app for each extra you installed and want active.
+    # "unfold",         # [unfold]        — themed admin
+    # "import_export",  # [import-export] — bulk import/export on block lists
+    # "axes",           # [axes]          — login lockout
     "nai_security",
 ]
 ```
+
+Installing an extra and **not** listing its app is safe — that feature is simply inactive. Listing an
+app whose package is not installed is not: Django fails at startup.
 
 ## 2. Add middleware (order matters)
 

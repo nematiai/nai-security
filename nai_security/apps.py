@@ -1,4 +1,4 @@
-from django.apps import AppConfig
+from django.apps import AppConfig, apps
 
 
 class NaiSecurityConfig(AppConfig):
@@ -9,9 +9,6 @@ class NaiSecurityConfig(AppConfig):
     def ready(self):
         from . import signals  # noqa: F401
 
-        # Configure axes dynamic settings if axes is installed
-        try:
+        if apps.is_installed('axes'):
             from .handlers.axes_integration import DynamicAxesHandler
             DynamicAxesHandler.configure_dynamic_settings()
-        except ImportError:
-            pass

@@ -1,9 +1,24 @@
 # Upgrading
 
 ```bash
-pip install -U "nai-security==1.14.0"
+pip install -U "nai-security==1.14.1"
 python manage.py migrate
 ```
+
+## 1.14.1
+
+Fixes two startup crashes on installs without the full extra set. No API change, no migration.
+
+- **`TypeError: duplicate base class ModelAdmin`** — with `django-import-export` absent, the admin
+  fell back to `ImportExportModelAdmin = ModelAdmin`, so two admin classes were declared with the
+  same base twice. Plain `pip install nai-security` plus `django.contrib.admin` could not start.
+- **`RuntimeError: Model class axes.models.AccessFailureLog doesn't declare an explicit app_label`**
+  — with `django-axes` installed as a package but **not** in `INSTALLED_APPS`, importing it raises
+  `RuntimeError`, which the `except ImportError` guards did not catch. Four call sites now gate on
+  `django.apps.apps.is_installed('axes')` instead.
+
+Installing an extra without adding its app to `INSTALLED_APPS` is now safe — the feature is inactive
+rather than fatal.
 
 ## 1.14.0
 
