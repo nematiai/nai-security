@@ -7,6 +7,7 @@ After install + migrate, these models appear in Django admin.
 Singleton row controlling global toggles and thresholds:
 
 - IP / country / UA blocking on/off
+- Path blocking on/off (dotfiles and leak paths — `/.git`, `/.env`, `/server-status`)
 - Auto-block thresholds and durations
 - Suspicious login alerts
 - List sync options

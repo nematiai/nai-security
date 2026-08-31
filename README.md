@@ -17,6 +17,7 @@ Django security package for IP blocking, country blocking, email blocking, rate 
 - **Email Blocking** - Helpers + admin lists for signup/login in your app (not request middleware)
 - **Domain Blocking** - Helpers + admin lists for disposable/spam domains
 - **User Agent Blocking** - Block bots, scrapers, attack tools
+- **Path Blocking** - Reject scanner probes for dotfiles (`/.git`, `/.env`, `/.ssh`) and leak paths (`/server-status`, `/phpinfo`), keeping `/.well-known/` reachable
 - **Rate Limiting** - Logs django-ratelimit hits; `RateLimitRule` is storage only (not an engine)
 - **Login History** - Track user logins with anomaly detection
 - **Auto-Blocking** - Automatically block IPs/countries based on attack patterns
@@ -225,6 +226,14 @@ Exempt specific users from security checks via the admin panel or ORM:
 Exemptions support optional expiration (`expires_at`) and can be toggled via `is_active`.
 
 > **Axes lockout note:** any active `WhitelistedUser` row exempts the user from django-axes lockout, regardless of `exemption_type`. The `exemption_type` field controls only the `SecurityMiddleware` checks (IP/country/rate-limit). See [Axes Integration → Whitelist bypass](#whitelist-bypass).
+
+## Upgrading to 1.14.0
+
+**New Path Blocking check (two migrations).** Run `python manage.py migrate` — `0006` adds
+`SecuritySettings.path_blocking_enabled`, **default on**. Dotfile paths (`/.git`, `/.env`, `/.ssh`, …)
+and `/server-status`, `/server-info`, `/phpinfo`, `/wp-config.php`, `/web.config`, `/id_rsa` now
+return 403 and log a `PATH_BLOCK` event; `0007` adds `PATH_BLOCK` to the `SecurityLog.action` choices. `/.well-known/` stays reachable (ACME renewal is
+unaffected). Disable it in admin → Security Settings.
 
 ## Upgrading to 1.13.0
 

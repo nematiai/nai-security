@@ -33,13 +33,23 @@ NAI_SECURITY_EXEMPT_PATHS = [
 
 Most knobs live in the singleton model **SecuritySettings** (Django admin), not in `settings.py`:
 
-- Enable/disable IP, country, user-agent blocking
+- Enable/disable IP, country, user-agent and path blocking
 - Auto-block thresholds / durations
 - Login anomaly flags
 - Sync toggles for disposable domains / bad bots
 - Axes: max attempts, cooloff minutes, attempt expiry
 
 Changes apply without restart (cached values are invalidated on save).
+
+## Path blocking
+
+`path_blocking_enabled` (**on by default**) returns 403 and logs a `PATH_BLOCK` event for any request to
+a dotfile path (`/.git`, `/.env`, `/.ssh`, `/.aws`, …) or to `/server-status`, `/server-info`,
+`/phpinfo`, `/wp-config.php`, `/web.config`, `/id_rsa`.
+
+Paths are normalized before matching, so `//.git/config` and `/./.git/config` are caught too.
+`/.well-known/` stays reachable so ACME / Let's Encrypt renewal is unaffected — but it is not a
+shelter: `/.well-known/.git/config` is still blocked.
 
 ## Country modes
 

@@ -272,6 +272,7 @@ class SecurityLogAdmin(ModelAdmin):
         "EMAIL_BLOCK": "#6f42c1",
         "DOMAIN_BLOCK": "#6c757d",
         "USER_AGENT_BLOCK": "#6c757d",
+        "PATH_BLOCK": "#e83e8c",
         "RATE_LIMIT": "#0d6efd",
         "AXES_LOCK": "#dc3545",
         "SUSPICIOUS_LOGIN": "#ffc107",
@@ -320,7 +321,7 @@ class SecuritySettingsAdmin(ModelAdmin):
                 "country_blocking_enabled", "country_whitelist_mode",
                 "ip_blocking_enabled", "email_blocking_enabled",
                 "domain_blocking_enabled", "user_agent_blocking_enabled",
-                "login_history_enabled",
+                "path_blocking_enabled", "login_history_enabled",
             )
         }),
         ("Axes Login Protection", {

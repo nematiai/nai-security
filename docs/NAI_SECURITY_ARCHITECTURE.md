@@ -80,10 +80,10 @@ nai_security/
 
 **`SecurityMiddleware`** — Main request filter pipeline:
 ```
-Request → Exempt path? → Localhost? → Whitelisted IP? → Blocked IP? → Blocked UA? → Blocked Country? → Pass
+Request → Exempt path? → Localhost? → Whitelisted IP? → Blocked IP? → Blocked UA? → Dangerous path? → Blocked Country? → Pass
 ```
 - Reads `SecuritySettings` (cached)
-- Respects feature toggle flags (`ip_blocking_enabled`, `user_agent_blocking_enabled`, `country_blocking_enabled`)
+- Respects feature toggle flags (`ip_blocking_enabled`, `user_agent_blocking_enabled`, `path_blocking_enabled`, `country_blocking_enabled`)
 - Supports both blacklist and whitelist country modes
 - Logs blocks to `SecurityLog`
 

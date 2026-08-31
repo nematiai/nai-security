@@ -1,16 +1,16 @@
-from unittest.mock import patch, MagicMock
 import os
+from unittest.mock import MagicMock, patch
 
 from django.core.cache import cache
-from django.test import TestCase, RequestFactory, override_settings
+from django.test import RequestFactory, TestCase, override_settings
 
+from nai_security.paths import is_dangerous_path
 from nai_security.utils import (
     get_client_ip,
     get_country_from_ip,
     parse_user_agent,
     resolve_geoip_db_path,
 )
-
 
 # ------------------------------------------------------------------
 # get_client_ip
@@ -230,3 +230,43 @@ class ParseUserAgentTest(TestCase):
     def test_ios(self):
         ua = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15'
         self.assertEqual(parse_user_agent(ua)['os'], 'iOS')
+
+
+class DangerousPathTest(TestCase):
+
+    def test_prefixes(self):
+        for path in ('/.git/config', '/.env.local', '/phpinfo.php', '/server-status',
+                     '/wp-config.php', '/web.config', '/id_rsa', '/.GIT/config'):
+            self.assertTrue(is_dangerous_path(path), path)
+
+    def test_safe_paths(self):
+        for path in ('/', '', '/admin/', '/accounts/login/', '/api/v1/health/',
+                     '/static/app.js', '/server-statusfoo'):
+            self.assertFalse(is_dangerous_path(path), path)
+
+    def test_normalization_defeats_equivalence_bypass(self):
+        for path in ('//.git/config', '/./.git/config', '///.git',
+                     '/foo/../.git/config', '/.well-known/../.git/config'):
+            self.assertTrue(is_dangerous_path(path), path)
+
+    def test_repeated_slashes_collapse_for_non_dot_prefixes(self):
+        # posixpath.normpath preserves a leading '//', and the dot-segment rule
+        # does not cover these — only the collapse does.
+        for path in ('//server-status', '//server-info', '//phpinfo',
+                     '//wp-config.php', '//web.config', '//id_rsa', '///phpinfo.php'):
+            self.assertTrue(is_dangerous_path(path), path)
+
+    def test_well_known_does_not_shelter_a_nested_dotfile(self):
+        for path in ('/.well-known/.git/config', '/.well-known/.env',
+                     '/.well-known/../.git/config'):
+            self.assertTrue(is_dangerous_path(path), path)
+
+    def test_any_dotfile_segment_is_dangerous(self):
+        for path in ('/.ssh/id_rsa', '/.npmrc', '/.bash_history', '/.aws/credentials',
+                     '/.idea/workspace.xml', '/.vscode/sftp.json', '/.gitlab-ci.yml',
+                     '/.dockerignore', '/.htaccess', '/.svn/entries', '/.DS_Store'):
+            self.assertTrue(is_dangerous_path(path), path)
+
+    def test_well_known_stays_reachable(self):
+        self.assertFalse(is_dangerous_path('/.well-known'))
+        self.assertFalse(is_dangerous_path('/.well-known/acme-challenge/token'))

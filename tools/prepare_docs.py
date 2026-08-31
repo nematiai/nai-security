@@ -24,7 +24,7 @@ PAGE_META = {
     "Whitelisting.md": "Exempt IPs and users from nai-security middleware and django-axes lockout.",
     "Management-Commands.md": "download_geoip and sync_security_lists management commands for nai-security.",
     "Celery-Tasks.md": "Optional Celery beat tasks for auto-block, expired IP cleanup, list sync, and security reports.",
-    "Upgrading.md": "Upgrade nai-security: 1.13.0 Django 5.2 floor, requests 2.32.4, celery extra; 1.12.0 proxy-header change.",
+    "Upgrading.md": "Upgrade nai-security: 1.14.0 path blocking (migrations 0006 + 0007); 1.13.0 Django 5.2 floor, requests 2.32.4, celery extra; 1.12.0 proxy-header change.",
 }
 
 EXTRA_CSS = """\

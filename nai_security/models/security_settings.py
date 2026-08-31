@@ -102,6 +102,10 @@ class SecuritySettings(models.Model):
     email_blocking_enabled = models.BooleanField(default=True)
     domain_blocking_enabled = models.BooleanField(default=True)
     user_agent_blocking_enabled = models.BooleanField(default=True)
+    path_blocking_enabled = models.BooleanField(
+        default=True,
+        help_text="Block requests to /.git, /.env, server-status, and similar leak paths",
+    )
     login_history_enabled = models.BooleanField(default=True)
     
     updated_at = models.DateTimeField(auto_now=True)

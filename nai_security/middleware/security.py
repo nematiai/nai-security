@@ -6,6 +6,7 @@ from django.core.cache import cache
 from django.db.models import F
 
 from ..utils import get_client_ip, get_country_from_ip
+from ..paths import is_dangerous_path
 from ..models import SecurityLog, SecuritySettings
 
 logger = logging.getLogger(__name__)
@@ -19,6 +20,7 @@ class SecurityMiddleware:
     3. Blocked IPs
     4. Blocked Countries / Allowed Countries
     5. Blocked User Agents
+    6. Dangerous paths (/.git, /.env, …)
 
     MUST be placed AFTER django.contrib.auth.middleware.AuthenticationMiddleware
     in MIDDLEWARE settings. Raises ImproperlyConfigured on startup if misordered.
@@ -115,6 +117,10 @@ class SecurityMiddleware:
         # Check User Agent — no granular exemption, only 'all' bypasses (handled above)
         if settings.user_agent_blocking_enabled and self._is_user_agent_blocked(user_agent):
             self._log_block(ip_address, 'USER_AGENT_BLOCK', request, country_code, user_agent)
+            return HttpResponseForbidden("Access denied")
+
+        if settings.path_blocking_enabled and is_dangerous_path(request.path):
+            self._log_block(ip_address, 'PATH_BLOCK', request, country_code, user_agent)
             return HttpResponseForbidden("Access denied")
 
         # Check country — 'geo_block' exemption bypasses this

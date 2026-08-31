@@ -6,13 +6,19 @@ from django.contrib.auth.models import AnonymousUser
 from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured
 from django.http import HttpResponse
-from django.test import TestCase, RequestFactory, override_settings
+from django.test import RequestFactory, TestCase, override_settings
 from django.utils import timezone
 
-from nai_security.middleware import SecurityMiddleware, RateLimitLoggingMiddleware
+from nai_security.middleware import RateLimitLoggingMiddleware, SecurityMiddleware
 from nai_security.models import (
-    BlockedIP, BlockedCountry, BlockedUserAgent, AllowedCountry,
-    WhitelistedIP, WhitelistedUser, SecuritySettings, SecurityLog,
+    AllowedCountry,
+    BlockedCountry,
+    BlockedIP,
+    BlockedUserAgent,
+    SecurityLog,
+    SecuritySettings,
+    WhitelistedIP,
+    WhitelistedUser,
 )
 
 User = get_user_model()
@@ -27,8 +33,8 @@ class SecurityMiddlewareBaseTest(TestCase):
         SecuritySettings.get_settings()
         cache.clear()
 
-    def _make_request(self, path='/', ip='8.8.8.8', user_agent='Mozilla/5.0', user=None):
-        request = self.factory.get(path)
+    def _make_request(self, path='/', ip='8.8.8.8', user_agent='Mozilla/5.0', user=None, **extra):
+        request = self.factory.get(path, **extra)
         request.META['REMOTE_ADDR'] = ip
         request.META['HTTP_USER_AGENT'] = user_agent
         request.user = user or AnonymousUser()
@@ -384,6 +390,56 @@ class UABlockCountBatchingTest(SecurityMiddlewareBaseTest):
         pattern.refresh_from_db()
         self.assertEqual(pattern.block_count, 100)
         self.assertIsNone(cache.get(f"sec_ua_count:{pattern.pk}"))
+
+
+# ------------------------------------------------------------------
+# Dangerous path catalog (sullo/nikto)
+# ------------------------------------------------------------------
+
+class PathBlockTest(SecurityMiddlewareBaseTest):
+
+    def test_git_path_blocked(self):
+        request = self._make_request(path='/.git/config')
+        self.assertEqual(self.middleware(request).status_code, 403)
+
+    def test_env_path_blocked(self):
+        request = self._make_request(path='/.env')
+        self.assertEqual(self.middleware(request).status_code, 403)
+
+    def test_normal_path_passes(self):
+        request = self._make_request(path='/accounts/login/')
+        self.assertEqual(self.middleware(request).status_code, 200)
+
+    def test_path_blocking_disabled(self):
+        settings = SecuritySettings.get_settings()
+        settings.path_blocking_enabled = False
+        settings.save()
+        cache.clear()
+        request = self._make_request(path='/.git/config')
+        self.assertEqual(self.middleware(request).status_code, 200)
+
+    def test_path_block_logs_event(self):
+        request = self._make_request(path='/.env')
+        self.middleware(request)
+        self.assertTrue(SecurityLog.objects.filter(action='PATH_BLOCK', path='/.env').exists())
+
+    def test_double_slash_does_not_bypass(self):
+        # RequestFactory urlparses its path arg and reads '//.git' as a netloc,
+        # so the leading slashes only survive via an explicit PATH_INFO.
+        request = self._make_request(path='/', PATH_INFO='//.git/config')
+        self.assertEqual(self.middleware(request).status_code, 403)
+
+    def test_dot_segment_does_not_bypass(self):
+        request = self._make_request(path='/./.git/config')
+        self.assertEqual(self.middleware(request).status_code, 403)
+
+    def test_ssh_key_path_blocked(self):
+        request = self._make_request(path='/.ssh/id_rsa')
+        self.assertEqual(self.middleware(request).status_code, 403)
+
+    def test_well_known_passes(self):
+        request = self._make_request(path='/.well-known/acme-challenge/token')
+        self.assertEqual(self.middleware(request).status_code, 200)
 
 
 # ------------------------------------------------------------------
