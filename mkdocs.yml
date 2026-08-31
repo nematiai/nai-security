@@ -78,7 +78,7 @@ extra_css:
 
 extra:
   homepage: https://nemati.ai
-  version: "1.13.0"
+  version: "1.14.0"
   generator: false
   social:
     - icon: fontawesome/brands/github

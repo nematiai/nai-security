@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "nai-security"
-version = "1.13.0"
+version = "1.14.0"
 description = "Django security app - IP/email/country blocking, rate limiting, login tracking, auto-blocking"
 readme = "README.md"
 license = "MIT"
@@ -68,6 +68,9 @@ dev = [
     "model-bakery>=1.20",
     "mypy>=1.14",
     "pip-audit>=2.8",
+    "pytest-randomly>=3.15",
+    "pytest-xdist>=3.6",
+    "mutmut>=3.2",
     "packaging>=24.0",
     "black>=25.0",
     "ruff>=0.9",
@@ -83,6 +86,14 @@ Issues = "https://github.com/nematiai/nai-security/issues"
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "tests.settings"
+markers = [
+    "mock: external I/O stubbed; no network",
+    "real: runs against a live stack",
+]
+
+[tool.mutmut]
+source_paths = ["nai_security/paths.py"]
+pytest_add_cli_args_test_selection = ["--no-cov", "-p", "no:randomly", "tests/test_utils.py", "tests/test_middleware.py"]
 
 [tool.coverage.run]
 source = ["nai_security"]

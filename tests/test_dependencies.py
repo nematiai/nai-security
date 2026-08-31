@@ -11,7 +11,6 @@ import pytest
 from packaging.requirements import Requirement
 from packaging.version import Version
 
-
 ROOT = Path(__file__).resolve().parents[1]
 PYPROJECT = ROOT / "pyproject.toml"
 
@@ -178,5 +177,5 @@ class TestRuntimeImportContracts:
 
         project = _load_project()
         assert re.fullmatch(r"\d+\.\d+\.\d+", project["version"])
-        assert project["version"] == "1.13.0"
+        assert project["version"] == "1.14.0"
         assert nai_security.__version__ == project["version"]

@@ -1,9 +1,23 @@
 # Upgrading
 
 ```bash
-pip install -U "nai-security==1.13.0"
+pip install -U "nai-security==1.14.0"
 python manage.py migrate
 ```
+
+## 1.14.0
+
+New **Path Blocking** check in `SecurityMiddleware` (two migrations):
+
+- Run `python manage.py migrate` — `0006` adds `SecuritySettings.path_blocking_enabled` (**default on**);
+  `0007` adds `PATH_BLOCK` to the `SecurityLog.action` choices.
+- Requests to any dotfile path (`/.git`, `/.env`, `/.ssh`, `/.aws`, …) and to `/server-status`,
+  `/server-info`, `/phpinfo`, `/wp-config.php`, `/web.config`, `/id_rsa` now return **403** and log a
+  `PATH_BLOCK` security event.
+- `/.well-known/` stays reachable, so ACME / Let's Encrypt renewal is unaffected — but it is not a
+  shelter: a dotfile nested under it (`/.well-known/.git/config`) is still blocked.
+- Paths are normalized before matching, so `//.git/config` and `/./.git/config` are blocked too.
+- Turn it off in admin → Security Settings → **Path blocking enabled**.
 
 ## 1.13.0
 

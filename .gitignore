@@ -1,4 +1,11 @@
 __pycache__/
+.pytest_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+.mutmut-cache
+mutants/
 *.py[cod]
 *.egg-info/
 *.egg
@@ -17,6 +24,7 @@ venv/
 .vscode/
 *.sqlite3
 .claude
+design/
 .wiki-tmp/
 .docs-build/
 site/

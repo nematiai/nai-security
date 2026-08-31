@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026-08-30
+
+| Time | Action | Files | Details | Skill |
+|------|--------|-------|---------|-------|
+| 16:26 | created | nai_security/paths.py, nai_security/migrations/0006_securitysettings_path_blocking_enabled.py | Nikto dangerous-path catalog: `is_dangerous_path()` + `SecuritySettings.path_blocking_enabled` (default on) | /audit recheck |
+| 16:26 | modified | nai_security/middleware/security.py, nai_security/models/security_log.py, nai_security/models/security_settings.py, nai_security/admin.py | `PATH_BLOCK` 403 + log after the UA check; admin toggle; action colour + `medium` severity | /audit recheck |
+| 17:10 | modified | nai_security/paths.py | Normalize (`posixpath.normpath` + collapse `//`) before matching — closes the `//.git/config` and `/./.git/config` bypass; replaced the enumerated dotfile list with a dot-segment rule, `/.well-known/` allow-listed | /audit reapply |
+| 17:10 | modified | pyproject.toml, nai_security/__init__.py, mkdocs.yml, README.md, wiki/Home.md, wiki/Upgrading.md, tools/prepare_docs.py, tests/test_dependencies.py | 1.14.0 release: Path Blocking feature + upgrade notes | /audit reapply |
+| 17:10 | modified | .gitignore | Ignore `design/` (was only `design/audit/` + `design/plan/`) | /audit reapply |
+| 17:15 | created | nai_security/migrations/0007_alter_securitylog_action.py | `AlterField` on `SecurityLog.action` — adding the `PATH_BLOCK` choice alters migration state, so `0006` alone left `makemigrations --check` dirty | /audit reapply |
+| 18:40 | created | tests/test_tasks.py, tests/test_sync_services.py, tests/conftest.py | Celery task + sync-service coverage (78.15% -> 85.05%); `mock`/`real` markers registered and auto-applied | /test-suite |
+| 18:40 | modified | pyproject.toml, tox.ini | Dev extra adds `pytest-randomly` (S1 isolation), `pytest-xdist` (S6 parallel-safety check), `mutmut` (mutation gate) — all three are manual hygiene gates, no lane runs them yet; coverage gate moved to the tox command so targeted `pytest <file>` runs are not failed by a partial-coverage threshold | /test-suite |
+| 19:20 | modified | nai_security/paths.py | `/.well-known/` allow-list no longer shelters a nested dotfile (`/.well-known/.git/config` now blocked) | /audit reapply |
+| 19:20 | modified | tests/test_utils.py | Regression guards for the repeated-slash collapse on non-dot prefixes (`//server-status`) and for the `.well-known` subtree | /audit reapply |
+
 ## 2026-08-20
 
 | Time | Action | Files | Details | Skill |
