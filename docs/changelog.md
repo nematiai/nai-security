@@ -4,6 +4,7 @@
 
 | Time | Action | Files | Details | Skill |
 |------|--------|-------|---------|-------|
+| 07:00 | modified | nai_security/checks.py, tests/test_checks.py | 1.18.0: `W005` `ALLOWED_HOSTS` wildcard (Django's `W020` only catches an empty list) and `W006` open CORS. TIDoS items 87/77. Items 89/37 triaged out — Django already 405s TRACE and handles OPTIONS | manual |
 | 06:00 | modified | nai_security/paths.py, tests/test_utils.py | 1.17.0: extension-based blocking — backup/editor leftovers, dumps, key material, non-Django scripts; archives only at the site root. TIDoS items 47/48/49/53 | manual |
 | 06:00 | modified | tests/conftest.py | Autouse cache-clear fixture — `TestCase` rolls back the DB but not the cache, so a mutated `SecuritySettings` singleton leaked between tests. Reproduced at `--randomly-seed=113`, green with the fixture | manual |
 | 05:00 | created | nai_security/middleware/headers.py, tests/test_headers.py | 1.16.0: `ResponseHeaderMiddleware` strips `Server`/`X-Powered-By`/`X-Runtime` and similar; `NAI_SECURITY_STRIP_HEADERS` overrides the default list. Nikto item 13 (information disclosure) | manual |

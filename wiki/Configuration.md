@@ -106,9 +106,14 @@ python manage.py check --deploy
 | `nai_security.W002` | The admin is mounted at a default, guessable prefix (`admin/`, `django-admin/`) |
 | `nai_security.W003` | Django is serving `static/` or `media/` through the URLconf with `DEBUG=False` |
 | `nai_security.W004` | `ResponseHeaderMiddleware` is not in `MIDDLEWARE`, so responses may advertise the stack |
+| `nai_security.W005` | `ALLOWED_HOSTS` contains `'*'` — any Host header is accepted |
+| `nai_security.W006` | CORS allows every origin (worse when combined with credentials) |
 
-Django's built-in checks only inspect **settings**; these inspect the **URLconf**, which it never
-looks at. Included URLconfs are followed, so `path('api/', include(...))` is reported with its full
+`W005` and `W006` do inspect settings, but ones Django's own checks miss: `security.W020` fires only
+when `ALLOWED_HOSTS` is **empty**, so `['*']` — the configuration that actually enables host-header
+injection — passes it silently. Django ships no CORS checks at all.
+
+`W001`–`W003` inspect the **URLconf**, which Django never looks at. Included URLconfs are followed, so `path('api/', include(...))` is reported with its full
 prefix. An unloadable `ROOT_URLCONF` makes them return nothing rather than crash `manage.py check`.
 
 They are warnings, so `check --deploy` still exits 0. To gate a build on them:

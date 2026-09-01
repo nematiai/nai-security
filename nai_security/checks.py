@@ -93,3 +93,50 @@ def check_fingerprint_headers(app_configs, **kwargs):
             id="nai_security.W004",
         )
     ]
+
+
+@register(Tags.security, deploy=True)
+def check_allowed_hosts_wildcard(app_configs, **kwargs):
+    hosts = list(getattr(settings, "ALLOWED_HOSTS", []))
+    if "*" not in hosts:
+        return []
+    return [
+        Warning(
+            "ALLOWED_HOSTS accepts any Host header ('*').",
+            hint="Django's security.W020 only fires on an empty list, so this passes it. An "
+                 "attacker controls the Host header, which reaches password-reset links, "
+                 "absolute URLs built with build_absolute_uri(), and cache keys. List the real "
+                 "hostnames instead.",
+            id="nai_security.W005",
+        )
+    ]
+
+
+@register(Tags.security, deploy=True)
+def check_cors_configuration(app_configs, **kwargs):
+    allow_all = getattr(settings, "CORS_ALLOW_ALL_ORIGINS", None)
+    if allow_all is None:
+        allow_all = getattr(settings, "CORS_ORIGIN_ALLOW_ALL", False)
+    wildcard_listed = "*" in list(getattr(settings, "CORS_ALLOWED_ORIGINS", []))
+    if not (allow_all or wildcard_listed):
+        return []
+
+    if getattr(settings, "CORS_ALLOW_CREDENTIALS", False):
+        return [
+            Warning(
+                "CORS allows every origin AND credentials.",
+                hint="Any site can drive authenticated requests as your logged-in users. "
+                     "Browsers reject the literal pair, so django-cors-headers echoes the "
+                     "request origin back instead — which is the same thing without the "
+                     "protection. Set CORS_ALLOWED_ORIGINS to the real origins.",
+                id="nai_security.W006",
+            )
+        ]
+    return [
+        Warning(
+            "CORS allows every origin.",
+            hint="Any site can read responses from your API. Replace CORS_ALLOW_ALL_ORIGINS "
+                 "with an explicit CORS_ALLOWED_ORIGINS list.",
+            id="nai_security.W006",
+        )
+    ]

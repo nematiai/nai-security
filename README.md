@@ -18,7 +18,7 @@ Django security package for IP blocking, country blocking, email blocking, rate 
 - **Domain Blocking** - Helpers + admin lists for disposable/spam domains
 - **User Agent Blocking** - Block bots, scrapers, attack tools
 - **Header Stripping** - Remove `Server`, `X-Powered-By` and similar so scanners cannot fingerprint the stack
-- **Deploy Checks** - `manage.py check --deploy` flags URL-surface exposure Django's own checks miss (dangerous routes, default admin prefix, Django-served static)
+- **Deploy Checks** - `manage.py check --deploy` flags exposure Django's own checks miss (dangerous routes, default admin prefix, Django-served static, `ALLOWED_HOSTS = ['*']`, open CORS)
 - **Path Blocking** - Reject scanner probes for dotfiles (`/.git`, `/.env`, `/.ssh`), leak paths (`/server-status`, `/phpinfo`) and leftover files by extension (`.bak`, `.sql`, `.log`, `.php`), keeping `/.well-known/` reachable
 - **Rate Limiting** - Logs django-ratelimit hits; `RateLimitRule` is storage only (not an engine)
 - **Login History** - Track user logins with anomaly detection
@@ -231,6 +231,11 @@ Exempt specific users from security checks via the admin panel or ORM:
 Exemptions support optional expiration (`expires_at`) and can be toggled via `is_active`.
 
 > **Axes lockout note:** any active `WhitelistedUser` row exempts the user from django-axes lockout, regardless of `exemption_type`. The `exemption_type` field controls only the `SecurityMiddleware` checks (IP/country/rate-limit). See [Axes Integration → Whitelist bypass](#whitelist-bypass).
+
+## Upgrading to 1.18.0
+
+Adds checks `nai_security.W005` (`ALLOWED_HOSTS` wildcard — Django's `W020` only catches an empty
+list) and `nai_security.W006` (open CORS). No migration, no API change.
 
 ## Upgrading to 1.17.0
 

@@ -1,9 +1,31 @@
 # Upgrading
 
 ```bash
-pip install -U "nai-security==1.17.0"
+pip install -U "nai-security==1.18.0"
 python manage.py migrate
 ```
+
+## 1.18.0
+
+Two new deploy checks. No migration, no API change, nothing changes at request time.
+
+| ID | Flags |
+| --- | --- |
+| `nai_security.W005` | `ALLOWED_HOSTS` contains `'*'` |
+| `nai_security.W006` | CORS allows every origin — escalated when `CORS_ALLOW_CREDENTIALS` is also on |
+
+`W005` exists because Django's `security.W020` only fires on an **empty** `ALLOWED_HOSTS`. A wildcard
+passes it, yet the wildcard is what lets an attacker control the Host header — which reaches
+password-reset links, `build_absolute_uri()` output, and cache keys.
+
+`W006` exists because Django ships no CORS checks; `django-cors-headers` is third-party. Both the
+modern `CORS_ALLOW_ALL_ORIGINS` and the legacy `CORS_ORIGIN_ALLOW_ALL` are read.
+
+Derived from the 0xInfection/TIDoS check classes: host header injection (87), insecure CORS (77).
+
+**Deliberately not added:** cross-site tracing (89) and HTTP method enumeration (37). Django already
+returns 405 for TRACE and handles OPTIONS correctly, so a check for either would report a risk this
+stack does not have.
 
 ## 1.17.0
 

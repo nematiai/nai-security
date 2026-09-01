@@ -6,6 +6,8 @@ from django.test import TestCase, override_settings
 
 from nai_security.checks import (
     check_admin_route,
+    check_allowed_hosts_wildcard,
+    check_cors_configuration,
     check_dangerous_routes,
     check_fingerprint_headers,
     check_static_serving,
@@ -122,6 +124,55 @@ class FingerprintHeaderCheckTest(TestCase):
         self.assertEqual(check_fingerprint_headers(None), [])
 
 
+class AllowedHostsWildcardCheckTest(TestCase):
+
+    @override_settings(ALLOWED_HOSTS=['*'])
+    def test_flags_the_wildcard_django_lets_through(self):
+        self.assertEqual(ids(check_allowed_hosts_wildcard(None)), ['nai_security.W005'])
+
+    @override_settings(ALLOWED_HOSTS=['example.com', '*'])
+    def test_flags_a_wildcard_mixed_with_real_hosts(self):
+        self.assertEqual(ids(check_allowed_hosts_wildcard(None)), ['nai_security.W005'])
+
+    @override_settings(ALLOWED_HOSTS=['example.com', 'www.example.com'])
+    def test_silent_on_explicit_hosts(self):
+        self.assertEqual(check_allowed_hosts_wildcard(None), [])
+
+    @override_settings(ALLOWED_HOSTS=[])
+    def test_silent_when_empty_because_django_W020_owns_that(self):
+        self.assertEqual(check_allowed_hosts_wildcard(None), [])
+
+
+class CorsCheckTest(TestCase):
+
+    @override_settings(CORS_ALLOW_ALL_ORIGINS=True, CORS_ALLOW_CREDENTIALS=True)
+    def test_wildcard_plus_credentials_is_the_dangerous_pair(self):
+        result = check_cors_configuration(None)
+        self.assertEqual(ids(result), ['nai_security.W006'])
+        self.assertIn('credentials', result[0].msg)
+
+    @override_settings(CORS_ALLOW_ALL_ORIGINS=True, CORS_ALLOW_CREDENTIALS=False)
+    def test_wildcard_alone_still_warns(self):
+        result = check_cors_configuration(None)
+        self.assertEqual(ids(result), ['nai_security.W006'])
+        self.assertNotIn('credentials', result[0].msg)
+
+    @override_settings(CORS_ORIGIN_ALLOW_ALL=True)
+    def test_legacy_setting_name_is_honoured(self):
+        self.assertEqual(ids(check_cors_configuration(None)), ['nai_security.W006'])
+
+    @override_settings(CORS_ALLOWED_ORIGINS=['*'])
+    def test_wildcard_inside_the_explicit_list(self):
+        self.assertEqual(ids(check_cors_configuration(None)), ['nai_security.W006'])
+
+    @override_settings(CORS_ALLOWED_ORIGINS=['https://app.example.com'])
+    def test_silent_on_an_explicit_origin_list(self):
+        self.assertEqual(check_cors_configuration(None), [])
+
+    def test_silent_when_cors_is_not_configured_at_all(self):
+        self.assertEqual(check_cors_configuration(None), [])
+
+
 class CheckRegistrationTest(TestCase):
 
     def test_all_three_run_under_check_deploy(self):
@@ -129,6 +180,7 @@ class CheckRegistrationTest(TestCase):
         registered = {c.__name__ for c in registry.registry.get_checks(include_deployment_checks=True)}
         self.assertLessEqual(
             {'check_dangerous_routes', 'check_admin_route', 'check_static_serving',
-             'check_fingerprint_headers'},
+             'check_fingerprint_headers',
+             'check_allowed_hosts_wildcard', 'check_cors_configuration'},
             registered,
         )
