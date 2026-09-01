@@ -267,6 +267,38 @@ class DangerousPathTest(TestCase):
                      '/.dockerignore', '/.htaccess', '/.svn/entries', '/.DS_Store'):
             self.assertTrue(is_dangerous_path(path), path)
 
+    def test_backdoor_and_script_extensions(self):
+        for path in ('/shell.php', '/c99.php', '/wso.php', '/cmd.jsp', '/backdoor.aspx',
+                     '/x.php5', '/y.phtml', '/z.cgi'):
+            self.assertTrue(is_dangerous_path(path), path)
+
+    def test_backup_and_editor_leftovers(self):
+        for path in ('/index.php.bak', '/settings.py.old', '/urls.py.swp', '/conf.orig',
+                     '/data.save', '/scratch.tmp'):
+            self.assertTrue(is_dangerous_path(path), path)
+
+    def test_database_dumps_and_key_material(self):
+        for path in ('/db.sql', '/app.sqlite3', '/data.db', '/server.key', '/cert.pem'):
+            self.assertTrue(is_dangerous_path(path), path)
+
+    def test_log_files(self):
+        for path in ('/error.log', '/logs/django.log', '/var/debug.log'):
+            self.assertTrue(is_dangerous_path(path), path)
+
+    def test_root_level_archives_are_blocked(self):
+        for path in ('/backup.zip', '/site.tar.gz', '/dump.tgz', '/old.7z'):
+            self.assertTrue(is_dangerous_path(path), path)
+
+    def test_nested_archives_are_ordinary_downloads(self):
+        for path in ('/media/user/report.zip', '/downloads/manual.tar.gz',
+                     '/exports/2026/data.zip'):
+            self.assertFalse(is_dangerous_path(path), path)
+
+    def test_suffix_rule_does_not_catch_lookalike_routes(self):
+        for path in ('/blog/my-old-post/', '/catalog/', '/api/logs/', '/changelog',
+                     '/static/app.css', '/keyboard/'):
+            self.assertFalse(is_dangerous_path(path), path)
+
     def test_well_known_stays_reachable(self):
         self.assertFalse(is_dangerous_path('/.well-known'))
         self.assertFalse(is_dangerous_path('/.well-known/acme-challenge/token'))

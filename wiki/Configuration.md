@@ -48,6 +48,20 @@ a dotfile path (`/.git`, `/.env`, `/.ssh`, `/.aws`, …) or to `/server-status`,
 `/phpinfo`, `/wp-config.php`, `/web.config`, `/id_rsa`.
 
 Paths are normalized before matching, so `//.git/config` and `/./.git/config` are caught too.
+
+Also blocked by **file extension**, since none of these is a legitimate Django route:
+
+| Group | Extensions |
+| --- | --- |
+| Editor / backup leftovers | `.bak` `.old` `.orig` `.save` `.swp` `.swo` `.tmp` |
+| Data and key material | `.sql` `.log` `.pem` `.key` `.sqlite` `.sqlite3` `.db` |
+| Scripts Django never executes | `.php` `.php5` `.phtml` `.asp` `.aspx` `.jsp` `.cgi` |
+
+Archives (`.zip` `.tar` `.tar.gz` `.tgz` `.rar` `.7z` `.gz` `.bz2`) are blocked **only at the site
+root** — `/backup.zip` is a leak, `/media/user/report.zip` is an ordinary download.
+
+If a real route collides with one of these, list it in `NAI_SECURITY_EXEMPT_PATHS`; exempt paths are
+checked before any blocking rule.
 `/.well-known/` stays reachable so ACME / Let's Encrypt renewal is unaffected — but it is not a
 shelter: `/.well-known/.git/config` is still blocked.
 

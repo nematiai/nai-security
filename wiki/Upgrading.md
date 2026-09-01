@@ -1,9 +1,26 @@
 # Upgrading
 
 ```bash
-pip install -U "nai-security==1.16.0"
+pip install -U "nai-security==1.17.0"
 python manage.py migrate
 ```
+
+## 1.17.0
+
+**Path blocking now also matches file extensions.** Requests ending in an editor/backup leftover
+(`.bak` `.old` `.orig` `.save` `.swp` `.swo` `.tmp`), data or key material (`.sql` `.log` `.pem`
+`.key` `.sqlite` `.sqlite3` `.db`), or a script Django never executes (`.php` `.php5` `.phtml`
+`.asp` `.aspx` `.jsp` `.cgi`) return 403 and log `PATH_BLOCK`.
+
+Archives are blocked **only at the site root**, so `/backup.zip` is refused while
+`/media/user/report.zip` is not.
+
+**This is a behaviour change on upgrade.** If a real route ends in one of those extensions, add it to
+`NAI_SECURITY_EXEMPT_PATHS` — exempt paths are checked before every blocking rule. Set
+`path_blocking_enabled = False` in admin to turn the whole feature off.
+
+Derived from the 0xInfection/TIDoS check classes: backdoor locations (47), backup locations (48),
+password-file locations (49), logfile locations (53).
 
 ## 1.16.0
 
