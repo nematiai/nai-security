@@ -4,6 +4,11 @@
 
 | Time | Action | Files | Details | Skill |
 |------|--------|-------|---------|-------|
+| 04:00 | created | nai_security/checks.py, tests/test_checks.py | 1.15.0: Nikto items 11/12/25 as `deploy`-tagged checks — `W001` route the middleware blocks, `W002` default admin prefix, `W003` Django-served static with `DEBUG=False`. Follows `include()`; returns nothing rather than crashing on an unloadable `ROOT_URLCONF` | manual |
+| 04:00 | modified | nai_security/apps.py, README.md, wiki/Configuration.md | Register in `ready()`; document the three IDs and `--fail-level WARNING` | manual |
+
+| Time | Action | Files | Details | Skill |
+|------|--------|-------|---------|-------|
 | 03:10 | modified | nai_security/admin.py | 1.14.1: `IMPORT_EXPORT_BASES` tuple — without `django-import-export` the fallback declared `ModelAdmin` twice, raising `TypeError: duplicate base class` on a bare install | manual |
 | 03:10 | modified | nai_security/admin.py, apps.py, signals.py, handlers/__init__.py | Gate axes on `apps.is_installed('axes')` — axes installed but absent from `INSTALLED_APPS` raises `RuntimeError`, which `except ImportError` never caught | manual |
 | 03:10 | modified | tests/test_admin.py | `BareInstallTest` — imports the admin in a subprocess with `import_export`/`unfold` blocked; the suite installs `[all,dev]` so this branch was never exercised | manual |

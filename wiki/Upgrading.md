@@ -1,9 +1,24 @@
 # Upgrading
 
 ```bash
-pip install -U "nai-security==1.14.1"
+pip install -U "nai-security==1.15.0"
 python manage.py migrate
 ```
+
+## 1.15.0
+
+New **deploy checks**. No migration, no API change, nothing changes at request time.
+
+Three checks register under Django's `deploy` tag and appear in `manage.py check --deploy`:
+
+| ID | Flags |
+| --- | --- |
+| `nai_security.W001` | A URL pattern resolves to a path `SecurityMiddleware` blocks — the view is unreachable |
+| `nai_security.W002` | The admin is mounted at a default, guessable prefix |
+| `nai_security.W003` | Django serves `static/`/`media/` through the URLconf with `DEBUG=False` |
+
+Django's own checks inspect **settings** only; these inspect the **URLconf**. They are warnings, so
+`check --deploy` still exits 0 — use `--fail-level WARNING` to gate a build on them.
 
 ## 1.14.1
 

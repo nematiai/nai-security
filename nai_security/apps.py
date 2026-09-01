@@ -7,7 +7,7 @@ class NaiSecurityConfig(AppConfig):
     verbose_name = 'NAI Security'
 
     def ready(self):
-        from . import signals  # noqa: F401
+        from . import checks, signals  # noqa: F401
 
         if apps.is_installed('axes'):
             from .handlers.axes_integration import DynamicAxesHandler

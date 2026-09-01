@@ -51,6 +51,31 @@ Paths are normalized before matching, so `//.git/config` and `/./.git/config` ar
 `/.well-known/` stays reachable so ACME / Let's Encrypt renewal is unaffected — but it is not a
 shelter: `/.well-known/.git/config` is still blocked.
 
+## Deploy checks
+
+`nai-security` registers three checks under the `deploy` tag, so they run alongside Django's own
+`security.W0xx` checks:
+
+```bash
+python manage.py check --deploy
+```
+
+| ID | Flags |
+| --- | --- |
+| `nai_security.W001` | A URL pattern resolves to a path `SecurityMiddleware` blocks — the view is unreachable |
+| `nai_security.W002` | The admin is mounted at a default, guessable prefix (`admin/`, `django-admin/`) |
+| `nai_security.W003` | Django is serving `static/` or `media/` through the URLconf with `DEBUG=False` |
+
+Django's built-in checks only inspect **settings**; these inspect the **URLconf**, which it never
+looks at. Included URLconfs are followed, so `path('api/', include(...))` is reported with its full
+prefix. An unloadable `ROOT_URLCONF` makes them return nothing rather than crash `manage.py check`.
+
+They are warnings, so `check --deploy` still exits 0. To gate a build on them:
+
+```bash
+python manage.py check --deploy --fail-level WARNING
+```
+
 ## Country modes
 
 - **Blocklist mode:** use `BlockedCountry`
