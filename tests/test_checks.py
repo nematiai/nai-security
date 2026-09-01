@@ -7,6 +7,7 @@ from django.test import TestCase, override_settings
 from nai_security.checks import (
     check_admin_route,
     check_dangerous_routes,
+    check_fingerprint_headers,
     check_static_serving,
 )
 
@@ -106,12 +107,28 @@ class UnloadableUrlconfTest(TestCase):
             self.assertEqual(check_static_serving(None), [])
 
 
+class FingerprintHeaderCheckTest(TestCase):
+
+    @override_settings(MIDDLEWARE=['django.middleware.common.CommonMiddleware'])
+    def test_flags_a_missing_middleware(self):
+        self.assertEqual(ids(check_fingerprint_headers(None)), ['nai_security.W004'])
+
+    @override_settings(MIDDLEWARE=['nai_security.middleware.ResponseHeaderMiddleware'])
+    def test_silent_when_installed(self):
+        self.assertEqual(check_fingerprint_headers(None), [])
+
+    @override_settings(MIDDLEWARE=['nai_security.middleware.headers.ResponseHeaderMiddleware'])
+    def test_accepts_the_long_dotted_path(self):
+        self.assertEqual(check_fingerprint_headers(None), [])
+
+
 class CheckRegistrationTest(TestCase):
 
     def test_all_three_run_under_check_deploy(self):
         from django.core.checks import registry
         registered = {c.__name__ for c in registry.registry.get_checks(include_deployment_checks=True)}
         self.assertLessEqual(
-            {'check_dangerous_routes', 'check_admin_route', 'check_static_serving'},
+            {'check_dangerous_routes', 'check_admin_route', 'check_static_serving',
+             'check_fingerprint_headers'},
             registered,
         )

@@ -17,6 +17,7 @@ Django security package for IP blocking, country blocking, email blocking, rate 
 - **Email Blocking** - Helpers + admin lists for signup/login in your app (not request middleware)
 - **Domain Blocking** - Helpers + admin lists for disposable/spam domains
 - **User Agent Blocking** - Block bots, scrapers, attack tools
+- **Header Stripping** - Remove `Server`, `X-Powered-By` and similar so scanners cannot fingerprint the stack
 - **Deploy Checks** - `manage.py check --deploy` flags URL-surface exposure Django's own checks miss (dangerous routes, default admin prefix, Django-served static)
 - **Path Blocking** - Reject scanner probes for dotfiles (`/.git`, `/.env`, `/.ssh`) and leak paths (`/server-status`, `/phpinfo`), keeping `/.well-known/` reachable
 - **Rate Limiting** - Logs django-ratelimit hits; `RateLimitRule` is storage only (not an engine)
@@ -230,6 +231,12 @@ Exempt specific users from security checks via the admin panel or ORM:
 Exemptions support optional expiration (`expires_at`) and can be toggled via `is_active`.
 
 > **Axes lockout note:** any active `WhitelistedUser` row exempts the user from django-axes lockout, regardless of `exemption_type`. The `exemption_type` field controls only the `SecurityMiddleware` checks (IP/country/rate-limit). See [Axes Integration → Whitelist bypass](#whitelist-bypass).
+
+## Upgrading to 1.16.0
+
+Adds `ResponseHeaderMiddleware`, which strips stack-identifying response headers, and check
+`nai_security.W004`, which warns when it is not installed. **Opt-in** — add it to `MIDDLEWARE`
+(first, so it sees the final response). No migration, no API change.
 
 ## Upgrading to 1.15.0
 

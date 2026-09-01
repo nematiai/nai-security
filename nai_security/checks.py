@@ -74,3 +74,22 @@ def check_static_serving(app_configs, **kwargs):
             id="nai_security.W003",
         )
     ]
+
+
+@register(Tags.security, deploy=True)
+def check_fingerprint_headers(app_configs, **kwargs):
+    installed = any(
+        mw.endswith("ResponseHeaderMiddleware")
+        for mw in getattr(settings, "MIDDLEWARE", [])
+    )
+    if installed:
+        return []
+    return [
+        Warning(
+            "Responses may advertise the stack to scanners.",
+            hint="Add 'nai_security.middleware.ResponseHeaderMiddleware' to MIDDLEWARE to strip "
+                 "Server, X-Powered-By and similar. Headers set by nginx or gunicorn must be "
+                 "removed at that layer instead.",
+            id="nai_security.W004",
+        )
+    ]

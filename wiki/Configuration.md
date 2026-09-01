@@ -51,6 +51,32 @@ Paths are normalized before matching, so `//.git/config` and `/./.git/config` ar
 `/.well-known/` stays reachable so ACME / Let's Encrypt renewal is unaffected — but it is not a
 shelter: `/.well-known/.git/config` is still blocked.
 
+## Header stripping
+
+`ResponseHeaderMiddleware` removes response headers that identify the stack. Opt-in:
+
+```python
+MIDDLEWARE = [
+    "nai_security.middleware.ResponseHeaderMiddleware",   # first — sees the final response
+    ...
+]
+```
+
+Django unwinds the response through middleware in reverse, so listing it **first** is what lets it
+strip headers added by everything below it.
+
+Default list: `Server`, `X-Powered-By`, `X-AspNet-Version`, `X-AspNetMvc-Version`, `X-Runtime`,
+`X-Generator`, `X-Drupal-Cache`, `X-Varnish`. Replace it wholesale with:
+
+```python
+NAI_SECURITY_STRIP_HEADERS = ["Server", "X-Powered-By"]   # [] disables stripping
+```
+
+Deleting a header that is not present is not an error, and matching is case-insensitive.
+
+**It only reaches headers Django owns.** gunicorn and nginx set `Server` after Django returns —
+strip those at that layer (`server_tokens off;`).
+
 ## Deploy checks
 
 `nai-security` registers three checks under the `deploy` tag, so they run alongside Django's own
@@ -65,6 +91,7 @@ python manage.py check --deploy
 | `nai_security.W001` | A URL pattern resolves to a path `SecurityMiddleware` blocks — the view is unreachable |
 | `nai_security.W002` | The admin is mounted at a default, guessable prefix (`admin/`, `django-admin/`) |
 | `nai_security.W003` | Django is serving `static/` or `media/` through the URLconf with `DEBUG=False` |
+| `nai_security.W004` | `ResponseHeaderMiddleware` is not in `MIDDLEWARE`, so responses may advertise the stack |
 
 Django's built-in checks only inspect **settings**; these inspect the **URLconf**, which it never
 looks at. Included URLconfs are followed, so `path('api/', include(...))` is reported with its full

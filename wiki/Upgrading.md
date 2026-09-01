@@ -1,9 +1,24 @@
 # Upgrading
 
 ```bash
-pip install -U "nai-security==1.15.0"
+pip install -U "nai-security==1.16.0"
 python manage.py migrate
 ```
+
+## 1.16.0
+
+New **`ResponseHeaderMiddleware`** — removes headers that fingerprint the stack.
+
+- Add it to `MIDDLEWARE` **first**, so it sees the response after every other middleware has
+  finished with it. It is opt-in; installing 1.16.0 changes nothing until you add it.
+- Strips by default: `Server`, `X-Powered-By`, `X-AspNet-Version`, `X-AspNetMvc-Version`,
+  `X-Runtime`, `X-Generator`, `X-Drupal-Cache`, `X-Varnish`.
+- Override with `NAI_SECURITY_STRIP_HEADERS` (a list; it **replaces** the default, and `[]` disables).
+- New check `nai_security.W004` warns under `check --deploy` when the middleware is absent.
+
+**Limit worth knowing:** this only reaches headers Django owns. A `Server` header added by gunicorn
+or nginx is set *after* Django returns, and must be removed at that layer
+(`server_tokens off;` in nginx).
 
 ## 1.15.0
 
